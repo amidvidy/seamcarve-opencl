@@ -27,6 +27,9 @@ all: $(OBJ)
 %.cpp.o: %.cpp
 	$(CP) -O3 $(INCS) -c $< -o $@
 
+proto:
+	cat $(CSRCS) | grep -e "^[[:alnum:]_]*[[:space:]]*[[:alnum:]_]*[[:space:]]*([^;]*)[[:space:]]*{$$" | sed -e "s/[[:space:]]*{$$/;/"
+
 clean:
 	rm -rf $(APPNAME) $(COBJS) $(POBJS)
 
