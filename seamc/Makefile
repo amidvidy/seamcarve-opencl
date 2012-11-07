@@ -1,15 +1,34 @@
-APPNAME := seamc
+APPNAME ?= seamc
 
-OBJ = main.c.o seamc.c.o
+CSRCS := $(wildcard *.c)
+PSRCS := $(wildcard *.cpp)
+COBJS := $(CSRCS:%.c=%.c.o)
+POBJS := $(PSRCS:%.cpp=%.cpp.o)
+
+OBJ = $(COBJS) $(POBJS)
+
+WandINCS ?= `MagickWand-config --cflags --cppflags`
+WandLIBS ?= `MagickWand-config --ldflags --libs`
+
+INCS += $(WandINCS)
+LIBS += $(WandLIBS) -pthread -fopenmp
+
+CC ?= gcc
+CP ?= g++
+
+default: all
 
 all: $(OBJ)
-	gcc -pthread -fopenmp $(OBJ) -o $(APPNAME)
+	gcc $(LIBS) $(OBJ) -o $(APPNAME)
 
 %.c.o: %.c
-	gcc -O3 -c $<
+	$(CC) -O3 $(INCS) -c $< -o $@
 
 %.cpp.o: %.cpp
-	gpp -O3 -c $<
+	$(CP) -O3 $(INCS) -c $< -o $@
 
 clean:
-	rm -rf $(APPNAME) *.o
+	rm -rf $(APPNAME) $(COBJS) $(POBJS)
+
+.PHONY: all clean
+
