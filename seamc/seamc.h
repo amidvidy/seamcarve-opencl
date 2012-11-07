@@ -13,12 +13,12 @@ typedef struct SEAMC_WORK {
 } SEAMC_WORK_t, *SEAMC_WORK_p;
 
 
-/* Core functions for seam carving */
+/* Core function headers for seam carving */
 
-void mk_kernel(float** K);
-void tfj_conv2d(float **I, float **O, float **K);
-void dp(float **Y, float **G);
-void copyKernel(float **I, int width_m1, int c);
-void zeroKernel(float **Y, int h, int w);
-void padKernel(float **OO, int h, int w);
+void SEAMC_mk_kernel(float** K);
+void SEAMC_tfj_conv2d(SEAMC_WORK_p pWORK, float **I, float **O, float **K);
+void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G);
+void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int c);
+void SEAMC_zeroKernel(float **Y, int h, int w);
+void SEAMC_padKernel(float **OO, int h, int w);
 
