@@ -1,23 +1,21 @@
 APPNAME ?= seamc
 BUILDIR ?= build
 TESTIMG ?= img.jpg
+FLAGS ?= -std=c99 -O3
+LIBS ?= -pthread -fopenmp
 
 CSRCS := $(wildcard *.c)
-PSRCS := $(wildcard *.cpp)
-HDR   := $(wildcard *.h)
+HDR   := $(wildcard *.h *.hpp)
 
-COBJS := $(CSRCS:%.c=$(BUILDIR)/%.c.o)
-POBJS := $(PSRCS:%.cpp=$(BUILDIR)/%.cpp.o)
+OBJ := $(CSRCS:%.c=$(BUILDIR)/%.c.o)
 
-OBJ = $(COBJS) $(POBJS)
+WandFLAGS ?= `pkg-config --cflags MagickWand` #`MagickWand-config --cflags --cppflags`
+WandLIBS  ?= `pkg-config --libs MagickWand` #`MagickWand-config --ldflags --libs`
 
-WandINCS ?= `pkg-config --cflags MagickWand` #`MagickWand-config --cflags --cppflags`
-WandLIBS ?= `pkg-config --libs MagickWand` #`MagickWand-config --ldflags --libs`
+FLAGS += $(WandFLAGS)
+LIBS  += $(WandLIBS)
 
-INCS += $(WandINCS)
-LIBS += $(WandLIBS) -pthread -fopenmp
-
-CC ?= gcc
+CC ?= gcc # I guess is ok to do this rather than use builtin Make stuff!
 CP ?= g++
 
 
@@ -27,24 +25,21 @@ all: $(APPNAME)
 
 fresh: clean all
 
-test: $(APPNAME)
+test: all
 	./$(APPNAME) $(TESTIMG)
 
 $(APPNAME): $(BUILDIR)/headers $(BUILDIR) $(OBJ)
 	gcc $(OBJ) $(LIBS) -o $@
 
 $(BUILDIR)/headers: $(HDR) | $(BUILDIR)
-	rm -f $(OBJ) #If this ever fires, remove ALL object code!
-	touch $@ #Track single mod date of all header files
+	rm -f $(OBJ) #Header changed, remove ALL object code!
+	@touch $@ #Track single mod date of all header files
 
 $(BUILDIR)/%.c.o: %.c
-	$(CC) -O3 $(INCS) -c $< -o $@
-
-$(BUILDIR)/%.cpp.o: %.cpp
-	$(CP) -O3 $(INCS) -c $< -o $@
+	$(CC) $(FLAGS) -c $< -o $@
 
 proto:
-	cat $(CSRCS) | grep -e "^[[:alnum:]_]*[[:space:]]*[[:alnum:]_]*[[:space:]]*([^;]*)[[:space:]]*{$$" | sed -e "s/[[:space:]]*{$$/;/"
+	@cat $(CSRCS) | grep -e "^[[:alnum:]_]*[[:space:]]*[[:alnum:]_]*[[:space:]]*([^;]*)[[:space:]]*{$$" | sed -e "s/[[:space:]]*{$$/;/"
 
 $(BUILDIR):
 	mkdir -p $(BUILDIR)

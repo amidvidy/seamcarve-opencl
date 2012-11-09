@@ -3,10 +3,11 @@
 ** Translated from Python to C...then onward.
 */
 
-
 #include "seamc.h"
 
 #include <stdio.h>
+
+#define _PI_ 3.14159265
 
 
 /* K is a 5x5 grid of floats (-2..-2 each axis in theory).
@@ -18,7 +19,7 @@ void SEAMC_mk_kernel(float** K) {
 	int x, y, xm, ym, dimX = 5, dimY = 5;
 	
 	s = 2.3;
-	c0 = 1.0 / (2.0 * M_PI * s*s);
+	c0 = 1.0 / (2.0 * _PI_ * s*s);
 	c1 = -1.0 / (2.0 * s*s);
 	for (y = 0; y < 5; y++) {
 		ym = y - 2;
