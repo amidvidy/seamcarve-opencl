@@ -6,6 +6,8 @@
 
 #include "seamc.h"
 
+#include <stdio.h>
+
 
 /* K is a 5x5 grid of floats (-2..-2 each axis in theory).
 ** Expected to be array of arrays at the moment.
@@ -134,5 +136,81 @@ def padKernel(OO,h,w):
         for j in range(0,20):
             OO[i][j] = 1000000.0;
             OO[i][w-j-1] = 1000000.0;
+*/
+
+
+void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O) {
+	float min_v, L, C, R, *pY;
+	int idx, i, y, width = pWORK->width, yydim = pWORK->yydim;
+	
+	idx = 5;
+	min_v = 100000000.0;
+	
+	pY = Y[yydim-1];
+	for (i = idx; i < (width-5); i++) {
+		if (pY[i] < min_v) {
+			min_v = pY[i];
+			idx = i;
+		}
+	}
+	
+	/* printf("idx=%d, min_v=%f", idx, min_v); */
+	O[yydim-1] = idx;
+	
+	for (y = 2; y < (yydim-1); y++) {
+		i = (yydim - y);
+		
+		pY = Y[i];
+		L = pY[idx-1];
+		C = pY[idx];
+		R = pY[idx+1];
+		
+		if (L < C) {
+			idx += (L < R) ? -1 :  1;
+		} else {
+			idx += (C < R) ?  0 :  1;
+		}
+		
+		/* printf("i=%d,idx=%d", i, idx); */
+		if (idx > (width-5)) idx = (width-5);
+		if (idx < 5) idx = 5;
+		O[i] = idx;
+	}
+} /* SOURCE:
+def backtrack(Y,O):
+    idx = 5;
+    min_v = 100000000.0;
+    
+    for i in range(idx,(width-5)):
+        if(Y[yydim-1][i] < min_v):
+            min_v = Y[yydim-1][i]
+            idx = i
+            
+    #print 'idx=%d, min_v=%f' % (idx, min_v)
+    O[yydim-1] = idx;
+    
+
+    for y in range(2, (yydim-1)):
+        i = (yydim - y);
+          
+        L = Y[i][idx-1];
+        C = Y[i][idx];
+        R = Y[i][idx+1];
+
+        if(L < C):
+            if(L < R):
+                idx = idx-1;
+            else:
+                idx = idx+1;
+        else:
+            if(C < R):
+                idx = idx;
+            else:
+                idx = idx + 1;
+
+        #print 'i=%d,idx=%d' % (i,idx)
+        idx = min(idx, (width-5));
+        idx = max(idx, 5);
+        O[i] = idx;
 */
 
