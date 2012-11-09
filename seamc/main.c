@@ -27,7 +27,7 @@ void process(char *image_file) {
         ThrowWandException(magick_wand);
     }
 
-    img_height = MagickGetImageWidth(magick_wand);
+    img_height = MagickGetImageHeight(magick_wand);
     img_width = MagickGetImageWidth(magick_wand);
 
     printf("img_height = %i\timage_width = %i\n", img_height, img_width);
