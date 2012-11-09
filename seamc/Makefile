@@ -1,8 +1,10 @@
 APPNAME ?= seamc
 BUILDIR ?= build
+TESTIMG ?= img.jpg
 
 CSRCS := $(wildcard *.c)
 PSRCS := $(wildcard *.cpp)
+HDR   := $(wildcard *.h)
 
 COBJS := $(CSRCS:%.c=$(BUILDIR)/%.c.o)
 POBJS := $(PSRCS:%.cpp=$(BUILDIR)/%.cpp.o)
@@ -19,12 +21,21 @@ CC ?= gcc
 CP ?= g++
 
 
-default: all
+default: test
 
 all: $(APPNAME)
 
-$(APPNAME): $(BUILDIR) | $(OBJ)
+fresh: clean all
+
+test: $(APPNAME)
+	./$(APPNAME) $(TESTIMG)
+
+$(APPNAME): $(BUILDIR)/headers $(BUILDIR) $(OBJ)
 	gcc $(OBJ) $(LIBS) -o $@
+
+$(BUILDIR)/headers: $(HDR) | $(BUILDIR)
+	rm -f $(OBJ) #If this ever fires, remove ALL object code!
+	touch $@ #Track single mod date of all header files
 
 $(BUILDIR)/%.c.o: %.c
 	$(CC) -O3 $(INCS) -c $< -o $@
@@ -41,5 +52,5 @@ $(BUILDIR):
 clean:
 	rm -rf build $(APPNAME)
 
-.PHONY: all clean
+.PHONY: all clean fresh test proto
 
