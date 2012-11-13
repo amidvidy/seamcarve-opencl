@@ -1,5 +1,5 @@
 import Image
-import ImageFilter
+#import ImageFilter
 import sys
 import numpy as np
 import math
@@ -87,8 +87,8 @@ def backtrack(Y,O):
         O[i] = idx;
 
 
-global ext
-ext = ".jpg"
+#global ext
+#ext = ".jpg"
 
 if(len(sys.argv) < 2):
     print 'no image file :('
@@ -97,17 +97,28 @@ if(len(sys.argv) < 2):
 imageFile = sys.argv[1]
 im1 = Image.open(imageFile);
 width,height = im1.size
-im1 = im1.convert('L');
+im1 = im1.convert('L'); # We shall eliminate this eventually :)
+
+print 'Input DumpINg...'
+imX = im1.convert('RGB');
+imX.save('in.jpg', 'JPEG');
+imX.save('in.tif', 'TIFF');
+imX.save('in.ppm', 'PPM');
+imX.save('in.bmp', 'BMP');
+print '...saved.  Now working on image data...'
+imY = imX.convert('RGB');
+imY.save('out.gif', 'GIF');
 
 
 print 'width=%d' % width
 print 'height=%d' % height
 
 I = np.asarray(im1,dtype=np.float32);
-K = np.ones((5,5), dtype=np.float32);
+
+K = np.ones((5,5), dtype=np.float32); # I think the "ones" is not needed???
 B = np.zeros(height,dtype=np.int32);
 
-mk_kernel(K);
+mk_kernel(K); # This probably writes to all 5x5 values???
 
 owidth = np.int32(width);
 oheight = np.int32(height);
@@ -171,5 +182,14 @@ for i in range(0,height):
     II[i] = I[i][:(width+1)]
     
 im2 = Image.fromarray(II);
-im2.show()
+
+print 'Output Dumping...'
+imX = im2.convert('RGB');
+imX.save('out.jpg', 'JPEG');
+imX.save('out.tif', 'TIFF');
+imX.save('out.ppm', 'PPM');
+imX.save('out.bmp', 'BMP');
+
+print 'Showing...'
+im2.show();
 print 'done'
