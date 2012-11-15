@@ -16,3 +16,7 @@ int32_t** np_zero_matrix_int32(size_t height, size_t width, size_t *pPitch);
 /* WARNING: These just cheat and cast int32 to float (usually 32-bits too) */
 float*    np_zero_array_float (size_t length);
 float**   np_zero_matrix_float(size_t height, size_t width, size_t *pPitch);
+
+void      np_free_array (void*  A);
+void      np_free_matrix(void** M);
+

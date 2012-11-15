@@ -4,6 +4,7 @@
 */
 
 #include "seamc.h"
+#include "numcy.h"
 
 #include <stdio.h>
 
