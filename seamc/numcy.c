@@ -31,6 +31,19 @@ int32_t** np_zero_matrix_int32(size_t height, size_t width, size_t *pPitch) {
     return arrarr;
 }
 
+int32_t* np_free_array_int32(int32_t* A) {
+    if (A) free(A);
+    return NULL;
+}
+
+int32_t** np_free_matrix_int32(int32_t** M) {
+    if (M) {
+        if (M[0]) free(M[0]);   // Free the backing array...
+        free(M);                // ...then the indexing array.
+    }
+    return NULL;
+}
+
 
 /* WARNING: These just cheat and cast int32 to float (usually 32-bits too) */
 float* np_zero_array_float(size_t LEN) {
@@ -41,15 +54,11 @@ float** np_zero_matrix_float(size_t H, size_t W, size_t *pP) {
     return (float**) np_zero_matrix_float(H, W, pP);
 }
 
-
-void np_free_array (void*  A) {
-    if (A) free(A);
+float* np_free_array_float(float* A) {
+    return (float*) np_free_array_int32((int32_t*)A);
 }
 
-void np_free_matrix(void** M) {
-    if (M) {
-        if (M[0]) free(M[0]);   // Free the backing array...
-        free(M);                // ...then the indexing array.
-    }
+float** np_free_matrix_float(float** M) {
+    return (float**) np_free_matrix_int32((int32_t**)M);
 }
 

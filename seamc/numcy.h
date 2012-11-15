@@ -12,11 +12,12 @@
 
 int32_t*  np_zero_array_int32 (size_t length);
 int32_t** np_zero_matrix_int32(size_t height, size_t width, size_t *pPitch);
+int32_t*  np_free_array_int32 (int32_t*  A);
+int32_t** np_free_matrix_int32(int32_t** M);
 
 /* WARNING: These just cheat and cast int32 to float (usually 32-bits too) */
 float*    np_zero_array_float (size_t length);
 float**   np_zero_matrix_float(size_t height, size_t width, size_t *pPitch);
-
-void      np_free_array (void*  A);
-void      np_free_matrix(void** M);
+float*    np_free_array_float (float*  A);
+float**   np_free_matrix_float(float** M);
 
