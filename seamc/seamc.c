@@ -216,3 +216,70 @@ def backtrack(Y,O):
         O[i] = idx;
 */
 
+
+void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW) {
+    // TODO: Intermediary work...
+    
+
+    // TODO: Translate from iM to oM...
+    
+} /* SOURCE:
+K = np.ones((5,5), dtype=np.float32); # I think the "ones" is not needed???
+B = np.zeros(height,dtype=np.int32);
+
+mk_kernel(K); # This probably writes to all 5x5 values???
+
+owidth = ???
+oheight = ???
+num_carve = ???;
+disableTFJ = ???;
+
+O = np.zeros((height,width),dtype=np.float32);
+OO = np.zeros((height,width),dtype=np.float32);
+
+while (width > (owidth - num_carve)):
+    start = time.time();
+    ydim = height-3;
+    xdim = width-3;
+    yydim = height-5;
+    xxdim = width-5;
+    
+    zeroKernel(O,oheight,np.int32(width));
+    zeroKernel(OO,oheight,np.int32(width));
+
+#using closures here...
+    tfj_conv2d(I,O,K);
+
+#pad with 'float max'
+    #padKernel(OO,np.int32(height),np.int32(width));
+    for i in range(0,height):
+        for j in range(0,20):
+            OO[i][j] = 1000000.0;
+            OO[i][width-j-1] = 1000000.0;
+        
+#do dynamic programming
+    dp(OO,O)
+
+#backtrack in python            
+    #t0 = time.time();
+    backtrack(OO,B)
+    #t1 = time.time() - t0;
+    #print '%f sec in backtrack (py function)' % t1
+
+    for i in range(yydim,height):
+        B[i] = B[yydim-1];
+    for i in range(0, 2):
+        B[i] = B[2];
+      
+    copyKernel(I,np.int32((width-1)),B[i]);
+
+    width = width - 1;
+    elapsed = (time.time() - start);
+    print '%f sec per iteration' % elapsed
+
+II = np.zeros((height,(width+1)),dtype=np.float32);
+
+for i in range(0,height):
+    II[i] = I[i][:(width+1)]
+*/
+

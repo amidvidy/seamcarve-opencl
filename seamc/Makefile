@@ -27,6 +27,7 @@ fresh: clean all
 
 test: all
 	./$(APPNAME) $(TESTIMG)
+# Can even use ImageMagick "compare" on resulting image vs. reference versions
 
 $(APPNAME): $(BUILDIR)/headers $(BUILDIR) $(OBJ)
 	gcc $(OBJ) $(LIBS) -o $@

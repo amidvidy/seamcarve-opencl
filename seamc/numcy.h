@@ -1,3 +1,6 @@
+#ifndef _NUMCY_H_
+#define _NUMCY_H_
+
 /* Couple "drop-in" replacements for some NumPy calls. */
 
 #include <stddef.h>
@@ -20,4 +23,6 @@ float*    np_zero_array_float (size_t length);
 float**   np_zero_matrix_float(size_t height, size_t width, size_t *pPitch);
 float*    np_free_array_float (float*  A);
 float**   np_free_matrix_float(float** M);
+
+#endif //_NUMCY_H_
 

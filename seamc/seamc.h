@@ -1,3 +1,6 @@
+#ifndef _SEAMC_H_
+#define _SEAMC_H_
+
 #include <float.h>
 #include <math.h>
 #include <time.h>
@@ -7,8 +10,8 @@
 **   later when translating to various parallel/distributed versions.
 */
 typedef struct SEAMC_WORK {
-	time_t		start_time, finish_time;
-	int		height, width, xdim, ydim, xxdim, yydim;
+	time_t      start_time, finish_time;
+	int         height, width, xdim, ydim, xxdim, yydim;
 	/* Could consider having matrices here too ?? */
 } SEAMC_WORK_t, *SEAMC_WORK_p;
 
@@ -21,4 +24,8 @@ void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G);
 void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int c);
 void SEAMC_zeroKernel(float **Y, int h, int w);
 void SEAMC_padKernel(float **OO, int h, int w);
+
+void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW);
+
+#endif // _SEAMC_H_
 
