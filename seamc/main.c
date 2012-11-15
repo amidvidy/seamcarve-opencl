@@ -1,10 +1,8 @@
-
 #include "magic.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <wand/MagickWand.h>
-
 
 #define ThrowWandException(wand) {                                      \
         char *description;                                              \
@@ -15,63 +13,66 @@
         exit(-1);                                                       \
     }
 
-
-void process(char *image_file) {
-    MagickWand *magick_wand = NULL;
-    MagickBooleanType status;
-    int img_height, img_width;
-
-    // Initialize ImageMagick
-    MagickWandGenesis();
-    
-    // Load image from file
-    magick_wand = NewMagickWand();
-    status = MagickReadImage(magick_wand, image_file);
-    if (status == MagickFalse) ThrowWandException(magick_wand);
-    
-    // Output basic info
-    img_height = MagickGetImageHeight(magick_wand);
-    img_width = MagickGetImageWidth(magick_wand);
-    printf("img_height = %i\timage_width = %i\n", img_height, img_width);
-    
-    // Carve it up, grey-style
-    MagickWand* mw_out = MW_Carve_Grey(magick_wand);
-    if (mw_out) {
-	    MagickWriteImage(mw_out, "out.jpg");
-        DestroyMagickWand(mw_out);  mw_out = NULL;
-    } else fprintf(stderr, "Error Carving Image.\n");
-
+void process(char *image_file)
+{
+	MagickWand *magick_wand = NULL;
+	MagickBooleanType status;
+	int img_height, img_width;
+	
+	// Initialize ImageMagick
+	MagickWandGenesis();
+	
+	// Load image from file
+	magick_wand = NewMagickWand();
+	status = MagickReadImage(magick_wand, image_file);
+	if (status == MagickFalse)
+	ThrowWandException(magick_wand);
+	
+	// Output basic info
+	img_height = MagickGetImageHeight(magick_wand);
+	img_width = MagickGetImageWidth(magick_wand);
+	printf("img_height = %i\timage_width = %i\n", img_height, img_width);
+	
+	// Carve it up, grey-style
+	MagickWand* mw_out = MW_Carve_Grey(magick_wand);
+	if (mw_out) {
+		MagickWriteImage(mw_out, "out.jpg");
+		DestroyMagickWand(mw_out);
+		mw_out = NULL;
+	} else fprintf(stderr, "Error Carving Image.\n");
 	
 	// Tidy up
-    DestroyMagickWand(magick_wand);  magick_wand = NULL;
-    
-    // Terminate ImageMagick
-    MagickWandTerminus();
+	DestroyMagickWand(magick_wand);
+	magick_wand = NULL;
+	
+	// Terminate ImageMagick
+	MagickWandTerminus();
 }
 
 /**
  * Prints the expected command-line args.
  */
-void usage(void) {
-    printf("usage: <image.jpg>\n");
+void usage(void)
+{
+	printf("usage: <image.jpg>\n");
 }
 
 /**
  * Main entry point.
  */
-int main(int argc, char *argv[]) {
-    char *image_file;
-
-    if (argc != 2) {
-        printf("argc = %i\n", argc);
-        usage();
-        exit(-1);
-    } else {
-        image_file = argv[1];
-        // DEBUG
-        printf("%s\n", image_file);
-        process(image_file);
-    }
+int main(int argc, char *argv[])
+{
+	char *image_file;
+	
+	if (argc != 2) {
+		printf("argc = %i\n", argc);
+		usage();
+		exit(-1);
+	} else {
+		image_file = argv[1];
+		// DEBUG
+		printf("%s\n", image_file);
+		process(image_file);
+	}
 }
-
 

@@ -5,16 +5,14 @@
 #include <math.h>
 #include <time.h>
 
-
 /* Using a struct to avoid globals.  Might turn into something useful
-**   later when translating to various parallel/distributed versions.
-*/
+ **   later when translating to various parallel/distributed versions.
+ */
 typedef struct SEAMC_WORK {
-	time_t      start_time, finish_time;
-	int         height, width, xdim, ydim, xxdim, yydim;
+	time_t start_time, finish_time;
+	int height, width, xdim, ydim, xxdim, yydim;
 	/* Could consider having matrices here too ?? */
 } SEAMC_WORK_t, *SEAMC_WORK_p;
-
 
 /* Core function headers for seam carving */
 
@@ -28,4 +26,3 @@ void SEAMC_padKernel(float **OO, int h, int w);
 void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW);
 
 #endif // _SEAMC_H_
-
