@@ -9,9 +9,9 @@
  **   later when translating to various parallel/distributed versions.
  */
 typedef struct SEAMC_WORK {
-	time_t start_time, finish_time;
-	int height, width, xdim, ydim, xxdim, yydim;
-	/* Could consider having matrices here too ?? */
+    time_t start_time, finish_time;
+    int height, width, xdim, ydim, xxdim, yydim;
+    /* Could consider having matrices here too ?? */
 } SEAMC_WORK_t, *SEAMC_WORK_p;
 
 /* Core function headers for seam carving */
