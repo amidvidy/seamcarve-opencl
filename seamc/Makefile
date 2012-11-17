@@ -51,7 +51,7 @@ $(BUILDIR):
 	mkdir -p $(BUILDIR)
 
 clean:
-	rm -rf build $(APPNAME)
+	rm -rf build $(APPNAME) out.jpg
 
 .PHONY: clean fresh test proto obj
 
