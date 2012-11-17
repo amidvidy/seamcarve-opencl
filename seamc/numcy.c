@@ -56,7 +56,7 @@ float* np_zero_array_float(size_t LEN)
 
 float** np_zero_matrix_float(size_t H, size_t W, size_t *pP)
 {
-    return (float**) np_zero_matrix_float(H, W, pP);
+    return (float**) np_zero_matrix_int32(H, W, pP);
 }
 
 float* np_free_array_float(float* A)

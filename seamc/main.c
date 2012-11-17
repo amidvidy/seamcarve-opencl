@@ -25,8 +25,7 @@ void process(char *image_file)
     // Load image from file
     magick_wand = NewMagickWand();
     status = MagickReadImage(magick_wand, image_file);
-    if (status == MagickFalse)
-    ThrowWandException(magick_wand);
+    if (status == MagickFalse) ThrowWandException(magick_wand);
     
     // Output basic info
     img_height = MagickGetImageHeight(magick_wand);
@@ -36,14 +35,14 @@ void process(char *image_file)
     // Carve it up, grey-style
     MagickWand* mw_out = MW_Carve_Grey(magick_wand);
     if (mw_out) {
-        MagickWriteImage(mw_out, "out.jpg");
-        DestroyMagickWand(mw_out);
-        mw_out = NULL;
+        status = MagickWriteImage(mw_out, "out.jpg");
+        if (status == MagickFalse) ThrowWandException(magick_wand);
+        
+        mw_out = DestroyMagickWand(mw_out);
     } else fprintf(stderr, "Error Carving Image.\n");
     
     // Tidy up
-    DestroyMagickWand(magick_wand);
-    magick_wand = NULL;
+    magick_wand = DestroyMagickWand(magick_wand);
     
     // Terminate ImageMagick
     MagickWandTerminus();

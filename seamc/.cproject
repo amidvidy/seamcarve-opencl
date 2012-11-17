@@ -22,7 +22,7 @@
 					<folderInfo id="com.nvidia.cuda.ide.toolchain.base.154631336.1478130181" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.2050485596" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.target.gnu.platform.base.386372525" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<builder id="cdt.managedbuild.target.gnu.builder.base.874610948" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base">
+							<builder autoBuildTarget="obj" enableAutoBuild="true" id="cdt.managedbuild.target.gnu.builder.base.874610948" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base">
 								<outputEntries>
 									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name=""/>
 								</outputEntries>
@@ -72,5 +72,8 @@
 		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.toolchain.base.154631336;com.nvidia.cuda.ide.toolchain.base.154631336.1478130181;cdt.managedbuild.tool.gnu.c.compiler.base.1746638895;cdt.managedbuild.tool.gnu.c.compiler.input.958279610">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/seamc"/>
 	</storageModule>
 </cproject>

@@ -22,10 +22,10 @@ void SEAMC_mk_kernel(float** K)
     s = 2.3;
     c0 = 1.0 / (2.0 * _PI_ * s * s);
     c1 = -1.0 / (2.0 * s * s);
-    for (y = 0; y < 5; y++) {
+    for (y = 0; y < dimY; y++) {
         ym = y - 2;
         pK_y = K[y];
-        for (x = 0; x < 5; x++) {
+        for (x = 0; x < dimX; x++) {
             xm = x - 2;
             pK_y[x] = c0 * exp((xm * xm + ym * ym) * c1);
         }
@@ -223,6 +223,13 @@ void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
 
 void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
 {
+    // Quick test of stuff!
+    for (int y = 0; y < oH; y++) {
+        float *iROW = iM[iH - 1 - y], *oROW = oM[y];
+        for (int x = 0; x < oW; x++) {
+            oROW[x] = iROW[iW - 1 - x];
+        }
+    }
     // TODO: Intermediary work...
     
     // TODO: Translate from iM to oM...
