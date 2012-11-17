@@ -223,16 +223,79 @@ void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
 
 void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
 {
-    // Quick test of stuff!
-    for (int y = 0; y < oH; y++) {
-        float *iROW = iM[iH - 1 - y], *oROW = oM[y];
-        for (int x = 0; x < oW; x++) {
-            oROW[x] = iROW[iW - 1 - x];
+    if (0) {    // Quick test of stuff!
+        for (int y = 0; y < oH; y++) {
+            float *iROW = iM[iH - 1 - y], *oROW = oM[y];
+            for (int x = 0; x < oW; x++) {
+                oROW[x] = iROW[iW - 1 - x];
+            }
+            return;
         }
     }
-    // TODO: Intermediary work...
     
-    // TODO: Translate from iM to oM...
+    float** K = np_zero_matrix_float(5, 5, NULL );
+    SEAMC_mk_kernel(K); // Could even be done once statically
+            
+    SEAMC_WORK_t WORK; // Consistent values across multiple SEAMC calls (rather than globals)
+    
+    int32_t* B = np_zero_array_int32(iH);
+    
+    int num_carveH = iW - oW, num_carveV = iH - oH;
+    int disableTFJ = 0; // Not referenced elsewhere?
+    
+    float** O = np_zero_matrix_float(iH, iW, NULL );
+    float** OO = np_zero_matrix_float(iH, iW, NULL );
+    
+    WORK.width = iW;
+    WORK.height = iH;
+    while (WORK.width > oW) {   // TODO: Deal with vertical too!!!
+        // TODO: Track time
+        WORK.start_time = time(NULL );
+        WORK.start_clock = clock();
+        WORK.ydim = WORK.height - 3;
+        WORK.xdim = WORK.width - 3;
+        WORK.yydim = WORK.height - 5;
+        WORK.xxdim = WORK.width - 5;
+        
+        SEAMC_zeroKernel(O, oH, oW);
+        SEAMC_zeroKernel(OO, oH, oW);
+        
+        SEAMC_tfj_conv2d(&WORK, iM, O, K);
+        
+        //SEAMC_padKernel(OO, WORK.height, WORK.width);
+        for (int i = 0; i < WORK.height; i++) {
+            for (int j = 0; j < 20; j++) {
+                OO[i][j] = 1000000.0;
+                OO[i][WORK.width - j - 1] = 1000000.0;
+            }
+        }
+
+        SEAMC_dp(&WORK, OO, O);
+
+        time_t t0 = time(NULL );
+        SEAMC_backtrack(&WORK, OO, B);
+        double secs = difftime(time(NULL ), t0);
+        printf("%f sec in backtrack (c function)", secs);
+
+        for (int y = WORK.yydim; y < WORK.height; y++) {
+            B[y] = B[WORK.yydim - 1];
+        }
+        for (int y = 0; y < 2; y++) {
+            B[y] = B[2];
+        }
+        // Something fishy here, seems like this should loop differently:
+        SEAMC_copyKernel(&WORK, iM,WORK.width-1,B[2]); // Was B[i] and i was likely left at 2
+
+        WORK.width -= 1;
+        double elapsed = difftime(time(NULL) ,WORK.start_time);
+        printf("%f sec this iteration", elapsed);
+
+        //IF RETURNING fresh array: float **II = np_zero_matrix_float(WORK.height,WORK.width+1,NULL);
+
+        for (int y = 0; y<WORK.height; y++) {
+//        oM[i] = I[i][:(width+1)]; // Want up through and including width (one extra value)
+        }
+    }
     
 } /* SOURCE:
  K = np.ones((5,5), dtype=np.float32); # I think the "ones" is not needed???
