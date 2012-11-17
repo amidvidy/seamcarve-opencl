@@ -170,6 +170,7 @@ while (width > (owidth - num_carve)):
     for i in range(0, 2):
         B[i] = B[2];
       
+#WARNING: This B[i] refers to "i" INSIDE copyKernel as it does it's nested loop!!!
     copyKernel(I,np.int32((width-1)),B[i]);
 
     width = width - 1;
