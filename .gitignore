@@ -1,4 +1,6 @@
 *.o
 build/
 seamc/seamc
+seamc/out.*
+seamc/diff.*
 *~

@@ -1,7 +1,8 @@
 APPNAME ?= seamc
 BUILDIR ?= build
-TESTIMG ?= ../ref_images/seam_img/in.tif
-REFIMG ?= ../ref_images/seam_img/out.tif
+REFDIR ?= ../ref_images/seam_img
+TESTIMG ?= $(REFDIR)/in.tif
+REFIMG ?= $(REFDIR)/out.tif
 FLAGS ?= -O0 -Wall -g -fno-inline-functions
 LIBS ?= -pthread -fopenmp
 
@@ -59,7 +60,7 @@ $(BUILDIR):
 	mkdir -p $(BUILDIR)
 
 clean:
-	rm -rf build $(APPNAME) out.jpg
+	rm -rf build $(APPNAME) out.* diff.*
 
 .PHONY: clean fresh test proto obj
 
