@@ -29,7 +29,8 @@ test: all
 	identify $(TESTIMG)
 	./$(APPNAME) $(TESTIMG)
 	identify out.jpg
-	display out.jpg
+	compare ../ref_images/seam_img/out.jpg out.jpg diff.jpg
+	display diff.jpg out.jpg
 # Can even use ImageMagick "compare" on resulting image vs. reference versions
 
 $(APPNAME): $(BUILDIR)/headers $(OBJ) | $(BUILDIR)

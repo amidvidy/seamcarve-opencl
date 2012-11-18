@@ -33,7 +33,7 @@ void process(char *image_file)
     printf("img_height = %i\timage_width = %i\n", img_height, img_width);
     
     // Carve it up, grey-style
-    MagickWand* mw_out = MW_Carve_Grey(magick_wand, img_height, img_width - 10);
+    MagickWand* mw_out = MW_Carve_Grey(magick_wand, img_height, img_width - 9);
     if (mw_out) {
         status = MagickWriteImage(mw_out, "out.jpg");
         if (status == MagickFalse) ThrowWandException(magick_wand);
