@@ -1,6 +1,7 @@
 APPNAME ?= seamc
 BUILDIR ?= build
-TESTIMG ?= img.jpg
+TESTIMG ?= ../ref_images/seam_img/in.tif
+REFIMG ?= ../ref_images/seam_img/out.tif
 FLAGS ?= -O0 -Wall -g -fno-inline-functions
 LIBS ?= -pthread -fopenmp
 
@@ -26,12 +27,18 @@ all: $(APPNAME)
 fresh: clean all
 
 test: all
+	rm -f out.tif
 	identify $(TESTIMG)
 	./$(APPNAME) $(TESTIMG)
-	identify out.jpg
-	compare ../ref_images/seam_img/out.jpg out.jpg diff.jpg
-	display diff.jpg out.jpg
-# Can even use ImageMagick "compare" on resulting image vs. reference versions
+	identify out.tif
+
+view: test
+	display out.tif
+
+diff: test
+	identify $(REFIMG)
+	compare $(REFIMG) out.tif diff.tif
+	display diff.tif out.tif
 
 $(APPNAME): $(BUILDIR)/headers $(OBJ) | $(BUILDIR)
 	gcc $(OBJ) $(LIBS) -o $@

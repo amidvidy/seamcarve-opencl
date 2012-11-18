@@ -13,7 +13,7 @@
         exit(-1);                                                       \
     }
 
-void process(char *image_file)
+void process(char *image_file, int out_width, int out_height)
 {
     MagickWand *magick_wand = NULL;
     MagickBooleanType status;
@@ -30,12 +30,18 @@ void process(char *image_file)
     // Output basic info
     img_height = MagickGetImageHeight(magick_wand);
     img_width = MagickGetImageWidth(magick_wand);
-    printf("img_height = %i\timage_width = %i\n", img_height, img_width);
+    if (out_height <= 0) out_height += img_height;
+    if (out_width <= 0) out_width += img_width;
+
+    printf("(w x h) IN: %i x %i  OUT: %i x %i\n", img_width, img_height, out_width, out_height);
     
     // Carve it up, grey-style
-    MagickWand* mw_out = MW_Carve_Grey(magick_wand, img_height, img_width - 9);
+    MagickWand* mw_out = MW_Carve_Grey(magick_wand, out_height, out_width);
     if (mw_out) {
         status = MagickWriteImage(mw_out, "out.jpg");
+        status = MagickWriteImage(mw_out, "out.tif");
+	status = MagickWriteImage(mw_out, "out.ppm");
+
         if (status == MagickFalse) ThrowWandException(magick_wand);
         
         mw_out = DestroyMagickWand(mw_out);
@@ -53,7 +59,7 @@ void process(char *image_file)
  */
 void usage(void)
 {
-    printf("usage: <image.jpg>\n");
+    printf("usage: <image.{jpg,png,tif,...}> [<new-width> <new-height>]\n");
 }
 
 /**
@@ -61,17 +67,16 @@ void usage(void)
  */
 int main(int argc, char *argv[])
 {
-    char *image_file;
-    
-    if (argc != 2) {
+    if (argc < 2) {
         printf("argc = %i\n", argc);
         usage();
         exit(-1);
     } else {
-        image_file = argv[1];
-        // DEBUG
-        printf("%s\n", image_file);
-        process(image_file);
+        char *image_file = argv[1];
+	int new_width = (argc > 2) ? atoi(argv[2]) : -9;
+	int new_height = (argc > 3) ? atoi(argv[3]) : 0;
+        printf("%s %d %d\n", image_file, new_width, new_height);
+        process(image_file, new_width, new_height);
     }
 }
 
