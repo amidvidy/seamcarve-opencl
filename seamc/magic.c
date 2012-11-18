@@ -117,7 +117,7 @@ float** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW)
     return M;
 }
 
-MagickWand* MW_Carve_Grey(const MagickWand *mw_in)
+MagickWand* MW_Carve_Grey(const MagickWand *mw_in, int newH, int newW)
 {
     MagickBooleanType mw_ok;
     MagickWand* mw_temp = NewMagickWand();
@@ -133,11 +133,10 @@ MagickWand* MW_Carve_Grey(const MagickWand *mw_in)
     float** M_in = MW_ToMatrix(mw_temp, &h, &w); // Zero col & row indicate ALL col & rows
     mw_temp = DestroyMagickWand(mw_temp);
     
-    float** M_out = np_zero_matrix_float(h, w, NULL );
-    SEAMC_carveGrey(M_in, h, w, M_out, h, w - 10); // TODO: Apply new dimensions based on params
+    float** M_out = SEAMC_carveGrey(M_in, h, w, newH, newW);
     M_in = np_free_matrix_float(M_in);
     
-    mw_temp = MW_FromMatrix(M_out, h, w);
+    mw_temp = MW_FromMatrix(M_out, newH, newW);
     M_out = np_free_matrix_float(M_out);
     
     return mw_temp;

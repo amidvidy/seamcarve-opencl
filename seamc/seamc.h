@@ -12,8 +12,8 @@
  */
 typedef struct SEAMC_WORK {
     time_t start_time, finish_time; // Epoch time
-    clock_t start_clock, finish_clock;  // CPU execution time (might break when using threads & GPU???)
-
+    clock_t start_clock, finish_clock; // CPU execution time (might break when using threads & GPU???)
+            
     int height, width, xdim, ydim, xxdim, yydim;
     /* Could consider having matrices here too ?? */
 } SEAMC_WORK_t, *SEAMC_WORK_p;
@@ -27,6 +27,6 @@ void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int32_t *C);
 void SEAMC_zeroKernel(float **Y, int h, int w);
 void SEAMC_padKernel(float **OO, int h, int w);
 
-void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW);
+float** SEAMC_carveGrey(float **iM, int iH, int iW, int newH, int newW);
 
 #endif // _SEAMC_H_

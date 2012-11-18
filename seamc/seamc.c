@@ -127,7 +127,7 @@ void SEAMC_zeroKernel(float **Y, int h, int w)
 
 void SEAMC_padKernel(float **OO, int h, int w)
 {
-    int ylast = w-1;
+    int ylast = w - 1;
     float *pOO_y;
     
     for (int y = 0; y < h; y++) {
@@ -221,16 +221,22 @@ void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
  O[i] = idx;
  */
 
-void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
+float** SEAMC_carveGrey(float **iM, int iH, int iW, int newH, int newW)
 { // WARNING: Modifies the input matrix too :)
+//TODO: Error handling (out of memory, etc)
+//TODO: perhaps use the output matrix as the working copy rather than modifying the input matrix.
+//       That might help with grow rather than shrink functionality too.
+
+    float** newM = np_zero_matrix_float(newH, newW, NULL );
+    
     if (0) {    // Quick test of stuff!
-        for (int y = 0; y < oH; y++) {
-            float *iROW = iM[iH - 1 - y], *oROW = oM[y];
-            for (int x = 0; x < oW; x++) {
+        for (int y = 0; y < newH; y++) {
+            float *iROW = iM[iH - 1 - y], *oROW = newM[y];
+            for (int x = 0; x < newW; x++) {
                 oROW[x] = iROW[iW - 1 - x];
             }
-            return;
         }
+        return newM;
     }
     
     float** K = np_zero_matrix_float(5, 5, NULL );
@@ -240,7 +246,7 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
     
     int32_t* B = np_zero_array_int32(iH);
     
-    int num_carveH = iW - oW, num_carveV = iH - oH;
+    int num_carveH = iW - newW, num_carveV = iH - newH;
     int disableTFJ = 0; // Not referenced elsewhere?
     
     float** O = np_zero_matrix_float(iH, iW, NULL );
@@ -248,7 +254,7 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
     
     WORK.width = iW;
     WORK.height = iH;
-    while (WORK.width > oW) {   // TODO: Deal with stretch & vertical too!!!
+    while (WORK.width > newW) {   // TODO: Deal with stretch & vertical too!!!
         WORK.start_time = time(NULL ); // Epoch time
         WORK.start_clock = clock(); // CPU usage
         WORK.ydim = WORK.height - 3;
@@ -256,8 +262,8 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
         WORK.yydim = WORK.height - 5;
         WORK.xxdim = WORK.width - 5;
         
-        SEAMC_zeroKernel(O, oH, oW);
-        SEAMC_zeroKernel(OO, oH, oW);
+        SEAMC_zeroKernel(O, newH, newW);
+        SEAMC_zeroKernel(OO, newH, newW);
         
         SEAMC_tfj_conv2d(&WORK, iM, O, K);
         
@@ -268,33 +274,32 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
                 OO[y][WORK.width - x - 1] = 1000000.0;
             }
         }
-
+        
         SEAMC_dp(&WORK, OO, O);
-
+        
         time_t t0 = time(NULL );
         SEAMC_backtrack(&WORK, OO, B);
         double secs = difftime(time(NULL ), t0);
         printf("%f sec in backtrack (c function)\n", secs);
-
+        
         for (int y = WORK.yydim; y < WORK.height; y++) {
             B[y] = B[WORK.yydim - 1];
         }
         for (int y = 0; y < 2; y++) {
             B[y] = B[2];
         }
-
-        SEAMC_copyKernel(&WORK, iM,WORK.width-1,B); // Was B[i] utilizing "i" from copyKernel's loop!
-
+        
+        SEAMC_copyKernel(&WORK, iM, WORK.width - 1, B); // Was B[i] utilizing "i" from copyKernel's loop!
+                
         WORK.width -= 1;
-        double elapsed = difftime(time(NULL) ,WORK.start_time);
+        double elapsed = difftime(time(NULL ), WORK.start_time);
         printf("%f sec this iteration\n", elapsed);
     }
-    //IF RETURNING fresh array: float **II = np_zero_matrix_float(WORK.height,WORK.width+1,NULL);
-    for (int y = 0; y<WORK.height; y++) {
-        memmove(oM[y], iM[y], oW * sizeof(float));
-//        oM[i] = iM[i][:(width+1)]; // Want up through and including width (one extra value)
-    }
     
+    for (int y = 0; y < WORK.height; y++) {
+        memmove(newM[y], iM[y], newW * sizeof(float));
+    }
+    return newM;
 } /* SOURCE:
  K = np.ones((5,5), dtype=np.float32); # I think the "ones" is not needed???
  B = np.zeros(height,dtype=np.int32);
