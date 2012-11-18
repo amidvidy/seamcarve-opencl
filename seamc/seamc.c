@@ -7,6 +7,7 @@
 #include "numcy.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #define _PI_ 3.14159265
 
@@ -17,16 +18,16 @@
 void SEAMC_mk_kernel(float** K)
 {
     float s, c0, c1, *pK_y;
-    int x, y, xm, ym, dimX = 5, dimY = 5;
+    int dimX = 5, dimY = 5;
     
     s = 2.3;
     c0 = 1.0 / (2.0 * _PI_ * s * s);
     c1 = -1.0 / (2.0 * s * s);
-    for (y = 0; y < dimY; y++) {
-        ym = y - 2;
+    for (int y = 0; y < dimY; y++) {
+        int ym = y - 2;
         pK_y = K[y];
-        for (x = 0; x < dimX; x++) {
-            xm = x - 2;
+        for (int x = 0; x < dimX; x++) {
+            int xm = x - 2;
             pK_y[x] = c0 * exp((xm * xm + ym * ym) * c1);
         }
     }
@@ -44,16 +45,16 @@ void SEAMC_mk_kernel(float** K)
 
 void SEAMC_tfj_conv2d(SEAMC_WORK_p pWORK, float **I, float **O, float **K)
 {
+    int ydim = pWORK->ydim, xdim = pWORK->xdim;
     float *pO_y, *pI_yyy, *pK_yy2;
-    int y, x, yy, xx, ydim = pWORK->ydim, xdim = pWORK->xdim;
     
-    for (y = 3; y < ydim; y++) {
+    for (int y = 3; y < ydim; y++) {
         pO_y = O[y];
-        for (x = 3; y < xdim; x++) {
-            for (yy = -2; yy < 3; yy++) {
+        for (int x = 3; x < xdim; x++) {
+            for (int yy = -2; yy < 3; yy++) {
                 pI_yyy = I[y + yy];
                 pK_yy2 = K[yy + 2];
-                for (xx = -2; xx < 3; xx++) {
+                for (int xx = -2; xx < 3; xx++) {
                     pO_y[x] += pK_yy2[xx + 2] * pI_yyy[x + xx];
                 }
             }
@@ -70,16 +71,16 @@ void SEAMC_tfj_conv2d(SEAMC_WORK_p pWORK, float **I, float **O, float **K)
 
 void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G)
 {
-    float *pY_i, *pY_ip, *pG_i;
-    int i, j, yydim = pWORK->yydim, xxdim = pWORK->xxdim;
+    int yydim = pWORK->yydim, xxdim = pWORK->xxdim;
+    float *pY_y, *pY_yp, *pG_y;
     
-    for (i = 5; i < yydim; i++) {
-        pY_i = Y[i];
-        pY_ip = Y[i - 1];
-        pG_i = G[i];
-        for (j = 5; j < xxdim; j++) {
-            pY_i[j] = pG_i[j]
-                    + fmin(fmin(pY_ip[j - 1], pY_ip[j]), pY_ip[j + 1]);
+    for (int y = 5; y < yydim; y++) {
+        pY_y = Y[y];
+        pY_yp = Y[y - 1];
+        pG_y = G[y];
+        for (int x = 5; x < xxdim; x++) {
+            pY_y[x] = pG_y[x]
+                    + fmin(fmin(pY_yp[x - 1], pY_yp[x]), pY_yp[x + 1]);
         }
     }
 } /* SOURCE:
@@ -89,15 +90,15 @@ void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G)
  Y[i][j] = G[i][j] + min(min(Y[i-1][j-1], Y[i-1][j]),Y[i-1][j+1]);
  */
 
-void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int c)
+void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int32_t *C)
 {
-    float *pI_i;
-    int i, j, height = pWORK->height;
+    int height = pWORK->height;
+    float *pI_y;
     
-    for (i = 0; i < height; i++) {
-        pI_i = I[i];
-        for (j = c; j < width_m1; j++) {
-            pI_i[j] = pI_i[j + 1];
+    for (int y = 0; y < height; y++) {
+        pI_y = I[y];
+        for (int x = C[y]; x < width_m1; x++) {
+            pI_y[x] = pI_y[x + 1];
         }
     }
 } /* SOURCE:
@@ -109,13 +110,12 @@ void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int c)
 
 void SEAMC_zeroKernel(float **Y, int h, int w)
 {
-    float *pY_i;
-    int i, j;
+    float *pY_y;
     
-    for (i = 0; i < h; i++) {
-        pY_i = Y[i];
-        for (j = 0; j < w; j++) {
-            pY_i[j] = 0;
+    for (int y = 0; y < h; y++) {
+        pY_y = Y[y];
+        for (int x = 0; x < w; x++) {
+            pY_y[x] = 0;
         }
     }
 } /* SOURCE:
@@ -127,14 +127,14 @@ void SEAMC_zeroKernel(float **Y, int h, int w)
 
 void SEAMC_padKernel(float **OO, int h, int w)
 {
-    float *pOO_i;
-    int i, j;
+    int ylast = w-1;
+    float *pOO_y;
     
-    for (i = 0; i < h; i++) {
-        pOO_i = OO[i];
-        for (j = 0; j < 20; j++) {
-            pOO_i[j] = 1000000.0;
-            pOO_i[w - j - 1] = 1000000.0;
+    for (int y = 0; y < h; y++) {
+        pOO_y = OO[y];
+        for (int x = 0; x < 20; x++) {
+            pOO_y[x] = 1000000.0;
+            pOO_y[ylast - x] = 1000000.0;
         }
     }
 } /* SOURCE:
@@ -147,25 +147,25 @@ void SEAMC_padKernel(float **OO, int h, int w)
 
 void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
 {
+    int width = pWORK->width, yydim = pWORK->yydim;
     float min_v, L, C, R, *pY;
-    int idx, i, y, width = pWORK->width, yydim = pWORK->yydim;
     
-    idx = 5;
+    int idx = 5;
     min_v = 100000000.0;
     
     pY = Y[yydim - 1];
-    for (i = idx; i < (width - 5); i++) {
-        if (pY[i] < min_v) {
-            min_v = pY[i];
-            idx = i;
+    for (int x = idx; x < (width - 5); x++) {
+        if (pY[x] < min_v) {
+            min_v = pY[x];
+            idx = x;
         }
     }
     
-    /* printf("idx=%d, min_v=%f", idx, min_v); */
+    /* printf("idx=%d, min_v=%f\n", idx, min_v); */
     O[yydim - 1] = idx;
     
-    for (y = 2; y < (yydim - 1); y++) {
-        i = (yydim - y);
+    for (int y = 2; y < (yydim - 1); y++) {
+        int i = (yydim - y);
         
         pY = Y[i];
         L = pY[idx - 1];
@@ -178,7 +178,7 @@ void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
             idx += (C < R) ? 0 : 1;
         }
         
-        /* printf("i=%d,idx=%d", i, idx); */
+        /* printf("i=%d,idx=%d\n", i, idx); */
         if (idx > (width - 5)) idx = (width - 5);
         if (idx < 5) idx = 5;
         O[i] = idx;
@@ -222,7 +222,7 @@ void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
  */
 
 void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
-{
+{ // WARNING: Modifies the input matrix too :)
     if (0) {    // Quick test of stuff!
         for (int y = 0; y < oH; y++) {
             float *iROW = iM[iH - 1 - y], *oROW = oM[y];
@@ -248,10 +248,9 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
     
     WORK.width = iW;
     WORK.height = iH;
-    while (WORK.width > oW) {   // TODO: Deal with vertical too!!!
-        // TODO: Track time
-        WORK.start_time = time(NULL );
-        WORK.start_clock = clock();
+    while (WORK.width > oW) {   // TODO: Deal with stretch & vertical too!!!
+        WORK.start_time = time(NULL ); // Epoch time
+        WORK.start_clock = clock(); // CPU usage
         WORK.ydim = WORK.height - 3;
         WORK.xdim = WORK.width - 3;
         WORK.yydim = WORK.height - 5;
@@ -263,10 +262,10 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
         SEAMC_tfj_conv2d(&WORK, iM, O, K);
         
         //SEAMC_padKernel(OO, WORK.height, WORK.width);
-        for (int i = 0; i < WORK.height; i++) {
-            for (int j = 0; j < 20; j++) {
-                OO[i][j] = 1000000.0;
-                OO[i][WORK.width - j - 1] = 1000000.0;
+        for (int y = 0; y < WORK.height; y++) {
+            for (int x = 0; x < 20; x++) {
+                OO[y][x] = 1000000.0;
+                OO[y][WORK.width - x - 1] = 1000000.0;
             }
         }
 
@@ -275,7 +274,7 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
         time_t t0 = time(NULL );
         SEAMC_backtrack(&WORK, OO, B);
         double secs = difftime(time(NULL ), t0);
-        printf("%f sec in backtrack (c function)", secs);
+        printf("%f sec in backtrack (c function)\n", secs);
 
         for (int y = WORK.yydim; y < WORK.height; y++) {
             B[y] = B[WORK.yydim - 1];
@@ -283,18 +282,17 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
         for (int y = 0; y < 2; y++) {
             B[y] = B[2];
         }
-        // Something fishy here, seems like this should loop differently:
-        SEAMC_copyKernel(&WORK, iM,WORK.width-1,B[2]); // Was B[i] and i was likely left at 2
+
+        SEAMC_copyKernel(&WORK, iM,WORK.width-1,B); // Was B[i] utilizing "i" from copyKernel's loop!
 
         WORK.width -= 1;
         double elapsed = difftime(time(NULL) ,WORK.start_time);
-        printf("%f sec this iteration", elapsed);
-
-        //IF RETURNING fresh array: float **II = np_zero_matrix_float(WORK.height,WORK.width+1,NULL);
-
-        for (int y = 0; y<WORK.height; y++) {
-//        oM[i] = I[i][:(width+1)]; // Want up through and including width (one extra value)
-        }
+        printf("%f sec this iteration\n", elapsed);
+    }
+    //IF RETURNING fresh array: float **II = np_zero_matrix_float(WORK.height,WORK.width+1,NULL);
+    for (int y = 0; y<WORK.height; y++) {
+        memmove(oM[y], iM[y], oW * sizeof(float));
+//        oM[i] = iM[i][:(width+1)]; // Want up through and including width (one extra value)
     }
     
 } /* SOURCE:
@@ -356,4 +354,3 @@ void SEAMC_carveGrey(float **iM, int iH, int iW, float **oM, int oH, int oW)
  for i in range(0,height):
  II[i] = I[i][:(width+1)]
  */
-

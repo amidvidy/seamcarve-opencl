@@ -1,6 +1,8 @@
 #ifndef _SEAMC_H_
 #define _SEAMC_H_
 
+#include "numcy.h"
+
 #include <float.h>
 #include <math.h>
 #include <time.h>
@@ -21,7 +23,7 @@ typedef struct SEAMC_WORK {
 void SEAMC_mk_kernel(float** K);
 void SEAMC_tfj_conv2d(SEAMC_WORK_p pWORK, float **I, float **O, float **K);
 void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G);
-void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int c);
+void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int32_t *C);
 void SEAMC_zeroKernel(float **Y, int h, int w);
 void SEAMC_padKernel(float **OO, int h, int w);
 
