@@ -36,7 +36,7 @@ fresh: clean all
 
 test: $(OUTIMG)
 
-$(OUTIMG): all
+$(OUTIMG): $(APPNAME)
 	-rm -f $@
 	identify $(TESTIMG)
 	./$(APPNAME) $(TESTIMG)
