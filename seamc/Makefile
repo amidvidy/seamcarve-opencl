@@ -1,8 +1,13 @@
+REFDIR ?= ../ref_images/castle-9
+IMGEXT ?= tif
+TESTIMG ?= $(REFDIR)/in.$(IMGEXT)
+REFIMG ?= $(REFDIR)/out.$(IMGEXT)
+OUTIMG ?= out.$(IMGEXT)
+DIFFIMG ?= diff.$(IMGEXT)
+
 APPNAME ?= seamc
 BUILDIR ?= build
-REFDIR ?= ../ref_images/seam_img
-TESTIMG ?= $(REFDIR)/in.tif
-REFIMG ?= $(REFDIR)/out.tif
+
 FLAGS ?= -O0 -Wall -g -fno-inline-functions
 LIBS ?= -pthread -fopenmp
 
@@ -27,19 +32,22 @@ all: $(APPNAME)
 
 fresh: clean all
 
-test: all
-	rm -f out.tif
+test: $(OUTIMG)
+
+$(OUTIMG): all
+	-rm -f $@
 	identify $(TESTIMG)
 	./$(APPNAME) $(TESTIMG)
-	identify out.tif
+	identify $@
 
-view: test
-	display out.tif
+view: $(OUTIMG)
+	display $<
 
-diff: test
+diff: $(OUTIMG)
+	-rm -f $(DIFFIMG)
 	identify $(REFIMG)
-	compare $(REFIMG) out.tif diff.tif
-	display diff.tif out.tif
+	compare $(REFIMG) $(OUTIMG) $(DIFFIMG)
+	display $(DIFFIMG)
 
 $(APPNAME): $(BUILDIR)/headers $(OBJ) | $(BUILDIR)
 	gcc $(OBJ) $(LIBS) -o $@
@@ -62,5 +70,5 @@ $(BUILDIR):
 clean:
 	rm -rf build $(APPNAME) out.* diff.*
 
-.PHONY: clean fresh test proto obj
+.PHONY: clean fresh test view diff
 
