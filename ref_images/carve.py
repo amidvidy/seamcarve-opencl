@@ -1,13 +1,23 @@
 #!/usr/bin/python -u
 
-import Image
+import PythonMagick
+#import Image
 #import ImageFilter
+
 import sys
 import numpy as np
 import math
+import time
 #from VecFunction import *
 #from decorators import *
-import time
+
+
+def grey_array(imgfile):
+    i = PythonMagick.Image(imgfile)
+    b = PythonMagick.Blob()
+    i.write(b, 'GRAY')
+    a = numpy.fromstring(b.data, 'float32').reshape((i.rows(), i.columns()))
+
 
 def mk_kernel(K):
     s = 2.3;
@@ -119,12 +129,10 @@ width,height = im0.size
 im1 = im0.convert('L'); #Convert to grayscale
 
 print 'Input DumpINg...'
-imX = im0.convert('RGB')
-imX.save('in.tif', 'TIFF')
-imX.save('in.png', 'PNG')
-imX = im1.convert('RGB')
-imX.save('grey.tif', 'TIFF')
-imX.save('grey.png', 'PNG')
+im0.save('in.tif', 'TIFF')
+im0.save('in.pmm', 'PPM')
+im1.save('grey.tif', 'TIFF')
+im1.save('grey.pgm', 'PGM')
 print '...saved.  Now working on image data...'
 
 print 'width=%d' % width
@@ -197,9 +205,9 @@ for i in range(0,height):
 im2 = Image.fromarray(II);
 
 print 'Output Dumping...'
+im2.save('out.pgm', 'PPM');
 imX = im2.convert('RGB');
 imX.save('out.tif', 'TIFF');
-imX.save('out.png', 'PNG');
 
 #print 'Showing...'
 #im2.show();
