@@ -130,7 +130,7 @@ im1 = im0.convert('L'); #Convert to grayscale
 
 print 'Input DumpINg...'
 im0.save('in.tif', 'TIFF')
-im0.save('in.pmm', 'PPM')
+im0.save('in.ppm', 'PPM')
 im1.save('grey.tif', 'TIFF')
 im1.save('grey.ppm', 'PPM')
 print '...saved.  Now working on image data...'
@@ -208,7 +208,6 @@ print 'Output Dumping...'
 imX = im2.convert('RGB');
 imX.save('out.ppm', 'PPM');
 imX.save('out.tif', 'TIFF');
-imX.save('out.jpg', 'JPEG');
 
 #print 'Showing...'
 #im2.show();
