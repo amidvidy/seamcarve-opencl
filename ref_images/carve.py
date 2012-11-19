@@ -1,7 +1,7 @@
 #!/usr/bin/python -u
 
-import PythonMagick
-#import Image
+import PythonMagick as mil
+import Image as pilImage
 #import ImageFilter
 
 import sys
@@ -13,8 +13,8 @@ import time
 
 
 def grey_array(imgfile):
-    i = PythonMagick.Image(imgfile)
-    b = PythonMagick.Blob()
+    i = mil.Image(imgfile)
+    b = mil.Blob()
     i.write(b, 'GRAY')
     a = numpy.fromstring(b.data, 'float32').reshape((i.rows(), i.columns()))
 
@@ -123,7 +123,7 @@ num_carve = 10 if (len(sys.argv) <= 2) else int(sys.argv[2])
 disableTFJ = False if (len(sys.argv) <= 3) else (sys.argv[3] == 'True')
 
 
-im0 = Image.open(imageFile)
+im0 = pilImage.open(imageFile)
 width,height = im0.size
 
 im1 = im0.convert('L'); #Convert to grayscale
@@ -132,7 +132,7 @@ print 'Input DumpINg...'
 im0.save('in.tif', 'TIFF')
 im0.save('in.pmm', 'PPM')
 im1.save('grey.tif', 'TIFF')
-im1.save('grey.pgm', 'PGM')
+im1.save('grey.ppm', 'PPM')
 print '...saved.  Now working on image data...'
 
 print 'width=%d' % width
@@ -202,11 +202,11 @@ II = np.zeros((height,width),dtype=np.float32); #Was (width+1)
 for i in range(0,height):
     II[i] = I[i][:width] #Was (width+1)
 
-im2 = Image.fromarray(II);
+im2 = pilImage.fromarray(II);
 
 print 'Output Dumping...'
-im2.save('out.pgm', 'PPM');
 imX = im2.convert('RGB');
+imX.save('out.pgm', 'PPM');
 imX.save('out.tif', 'TIFF');
 
 #print 'Showing...'

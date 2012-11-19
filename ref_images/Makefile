@@ -3,11 +3,11 @@
 SUFX ?= tif png gif jpg
 CARV ?= 1 10
 
-ORIG := $(wildcard $(foreach sufx,$(SUFX),orig/*.$(sufx)))
-CONV := $(ORIG:orig/%=ppm/%.ppm)
+ORIG := $(wildcard $(foreach sufx,$(SUFX),ORIG/*.$(sufx)))
+CONV := $(ORIG:ORIG/%=CONV/%.ppm)
 
-IMGS = $(sort $(wildcard ppm/*.ppm) $(CONV))
-DIRS = $(foreach carv,$(CARV),$(IMGS:ppm/%.ppm=%_py$(carv)))
+IMGS = $(sort $(wildcard CONV/*.ppm) $(CONV))
+DIRS = $(foreach carv,$(CARV),$(IMGS:CONV/%.ppm=%_py$(carv)))
 
 
 default: info
@@ -22,19 +22,19 @@ dirs:
 	echo $(IMGS)
 	echo $(DIRS)
 
-ppm/%.ppm: orig/% | ppm
+CONV/%.ppm: ORIG/% | CONV
 	convert -strip $< -colorspace RGB -depth 8 $@
 
-%_py1: ppm/%.ppm | carve.py
-	rm -Rf $@
-	( mkdir -p $@ && cd $@ && ../carve.py %< 1 )
+%_py1: CONV/%.ppm | carve.py
+	-rm -Rf $@
+	( mkdir -p $@ && cd $@ && ../carve.py ../$< 1 )
 
-%_py10: ppm/%.ppm | carve.py
-	rm -Rf $@
-	( mkdir -p $@ && cd $@ && ../carve.py $< 1 )
+%_py10: CONV/%.ppm | carve.py
+	-rm -Rf $@
+	( mkdir -p $@ && cd $@ && ../carve.py ../$< 10 )
 
-ppm:
-	mkdir -p ppm
+CONV:
+	mkdir -p CONV
 
 .PHONY: clean info
 
@@ -45,5 +45,5 @@ info: conv
 	identify $(CONV)
 
 clean:
-	rm -Rf ppm *_py1 *_py10
+	rm -Rf CONV *_py1 *_py10
 
