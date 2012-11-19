@@ -206,8 +206,9 @@ im2 = pilImage.fromarray(II);
 
 print 'Output Dumping...'
 imX = im2.convert('RGB');
-imX.save('out.pgm', 'PPM');
+imX.save('out.ppm', 'PPM');
 imX.save('out.tif', 'TIFF');
+imX.save('out.jpg', 'JPEG');
 
 #print 'Showing...'
 #im2.show();
