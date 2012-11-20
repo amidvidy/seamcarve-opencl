@@ -200,10 +200,54 @@ void Cleanup(cl_context context, cl_command_queue commandQueue,
         clReleaseContext(context);
 
 }
-
+void handleEnqueueKernelError(cl_int errNum, std::string initialMsg) {
+    std::cerr << initialMsg << std::endl;
+    switch (errNum) {
+    case CL_INVALID_PROGRAM_EXECUTABLE:
+        std::cerr << "There is no successfully built program executable "
+                  << "available for the device associated with the command queue."
+                  << std::endl;
+        break;
+    case CL_INVALID_COMMAND_QUEUE:
+        std::cerr << "Invalid command queue." << std::endl;
+        break;
+    case CL_INVALID_CONTEXT:
+        std::cerr << "The context associated with the command queue is different"
+                  << " from the context associated with this kernel."
+                  << std::endl;
+        break;
+    case CL_INVALID_KERNEL_ARGS:
+        std::cerr << "The kernel argument variables have not been specified." << std::endl;
+        break;
+    case CL_INVALID_WORK_DIMENSION:
+        std::cerr << "Invalid work dimension." << std::endl;
+        break;
+    case CL_INVALID_WORK_GROUP_SIZE:
+        std::cerr << "Invalid work group size." << std::endl;
+        break;
+    case CL_INVALID_WORK_ITEM_SIZE:
+        std::cerr << "Invalid work item size." << std::endl;
+        break;
+    case CL_INVALID_GLOBAL_OFFSET:
+        std::cerr << "Global work offset must be NULL." << std::endl;
+        break;
+    case CL_OUT_OF_RESOURCES:
+        std::cerr << "Insufficient resources available to enqueue kernel." << std::endl;
+        break;
+    case CL_MEM_OBJECT_ALLOCATION_FAILURE:
+        std::cerr << "Failure to allocate memory for image or buffer objects on the device." << std::endl;
+        break;
+    case CL_INVALID_EVENT_WAIT_LIST:
+        std::cerr << "Invalid event eait list." << std::endl;
+        break;
+    case CL_OUT_OF_HOST_MEMORY:
+        std::cerr << "Insufficient resources available on the host for the OpenCL implementation." << std::endl;
+        break;
+    }
+}
 void handleCreateImageError(cl_int errNum, std::string initialMsg) {
     std::cerr << initialMsg << std::endl;
-    switch(errNum) {
+    switch (errNum) {
     case CL_INVALID_CONTEXT:
         std::cerr << "Invalid OpenCL context." << std::endl;
         break;
@@ -494,7 +538,7 @@ int main(int argc, char** argv)
                                     0, NULL, NULL);
     if (errNum != CL_SUCCESS)
     {
-        std::cerr << "Error queuing kernel for execution." << std::endl;
+        handleEnqueueKernelError(errNum, "Error queueing kernel for execution:");
         Cleanup(context, commandQueue, program, kernel, imageObjects, sampler);
         return 1;
     }
