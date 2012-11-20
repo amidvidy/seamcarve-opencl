@@ -230,6 +230,28 @@ cl_mem LoadImage(cl_context context, char *fileName, int &width, int &height)
 
     cl_int errNum;
     cl_mem clImage;
+
+    // New in OpenCL 1.2, need to create image descriptor.
+    cl_image_desc clImageDesc;
+    clImageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    clImageDesc.image_width = width;
+    clImageDesc.image_height = height;
+    clImageDesc.image_depth = 1;
+    clImageDesc.image_array_size = 1;
+    clImageDesc.image_row_pitch = 0;
+    clImageDesc.image_slice_pitch = 0;
+    clImageDesc.num_mip_levels = 0;
+    clImageDesc.num_samples = 0;
+
+    // New in OpenCL 1.2, clCreateImage handles 1D, 2D, and 3D images
+    clImage = clCreateImage(context,
+                            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                            &clImageFormat,
+                            &clImageDesc,
+                            buffer,
+                            &errNum);
+
+    /* Uses old OpenCL 1.1 API
     clImage = clCreateImage2D(context,
                             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                             &clImageFormat,
@@ -238,7 +260,7 @@ cl_mem LoadImage(cl_context context, char *fileName, int &width, int &height)
                             0,
                             buffer,
                             &errNum);
-
+    */
     if (errNum != CL_SUCCESS)
     {
         std::cerr << "Error creating CL image object" << std::endl;
@@ -340,6 +362,26 @@ int main(int argc, char** argv)
     cl_image_format clImageFormat;
     clImageFormat.image_channel_order = CL_RGBA;
     clImageFormat.image_channel_data_type = CL_UNORM_INT8;
+
+    // See line 234
+    cl_image_desc clImageDesc;
+    clImageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    clImageDesc.image_width = width;
+    clImageDesc.image_height = height;
+    clImageDesc.image_depth = 1;
+    clImageDesc.image_array_size = 1;
+    clImageDesc.image_row_pitch = 0;
+    clImageDesc.image_slice_pitch = 0;
+    clImageDesc.num_mip_levels = 0;
+    clImageDesc.num_samples = 0;
+
+    imageObjects[1] = clCreateImage(context,
+                                    CL_MEM_WRITE_ONLY,
+                                    &clImageFormat,
+                                    &clImageDesc,
+                                    NULL,
+                                    &errNum);
+    /*
     imageObjects[1] = clCreateImage2D(context,
                                        CL_MEM_WRITE_ONLY,
                                        &clImageFormat,
@@ -348,7 +390,7 @@ int main(int argc, char** argv)
                                        0,
                                        NULL,
                                        &errNum);
-
+    */
     if (errNum != CL_SUCCESS)
     {
         std::cerr << "Error creating CL output image object." << std::endl;
