@@ -201,8 +201,8 @@ void Cleanup(cl_context context, cl_command_queue commandQueue,
 
 }
 
-void handleCreateImageError(cl_int errNum) {
-    std::cerr << "Error creating CL image object:" << std::endl;
+void handleCreateImageError(cl_int errNum, std::string initialMsg) {
+    std::cerr << initialMsg << std::endl;
     switch(errNum) {
     case CL_INVALID_CONTEXT:
         std::cerr << "Invalid OpenCL context." << std::endl;
@@ -218,7 +218,7 @@ void handleCreateImageError(cl_int errNum) {
         break;
     case CL_INVALID_IMAGE_SIZE:
         std::cerr << "Image dimensions specified in image_desc exceed allowed "
-                  << "range for the given device context" 
+                  << "range for the given device context"
                   << std::endl;
         break;
     case CL_INVALID_HOST_PTR:
@@ -305,7 +305,7 @@ cl_mem LoadImage(cl_context context, char *fileName, int &width, int &height)
     */
     if (errNum != CL_SUCCESS)
     {
-        handleCreateImageError(errNum);
+        handleCreateImageError(errNum, "Error creating CL input image object:");
         return 0;
     }
 
@@ -410,12 +410,11 @@ int main(int argc, char** argv)
     clImageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     clImageDesc.image_width = width;
     clImageDesc.image_height = height;
-    clImageDesc.image_depth = 1;
-    clImageDesc.image_array_size = 1;
     clImageDesc.image_row_pitch = 0;
     clImageDesc.image_slice_pitch = 0;
     clImageDesc.num_mip_levels = 0;
     clImageDesc.num_samples = 0;
+    clImageDesc.buffer = NULL;
 
     imageObjects[1] = clCreateImage(context,
                                     CL_MEM_WRITE_ONLY,
@@ -435,7 +434,7 @@ int main(int argc, char** argv)
     */
     if (errNum != CL_SUCCESS)
     {
-        std::cerr << "Error creating CL output image object." << std::endl;
+        handleCreateImageError(errNum, "Error creating CL output image object:");
         Cleanup(context, commandQueue, program, kernel, imageObjects, sampler);
         return 1;
     }
