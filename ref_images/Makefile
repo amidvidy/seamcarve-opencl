@@ -25,7 +25,7 @@ conv: $(CONV)
 CONV/%.ppm: ORIG/% | CONV
 	convert -strip $< -colorspace RGB -depth 8 $@
 
-py: $(PYc) $(PYo)
+py: $(PYc) # Not worried about output image right now $(PYo)
 
 %_py1/carves %_py1/out.ppm: CONV/%.ppm | carve.py
 	-rm -Rf $(dir $@)
