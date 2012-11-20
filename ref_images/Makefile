@@ -23,7 +23,8 @@ fresh: clean all
 conv: $(CONV)
 
 CONV/%.ppm: ORIG/% | CONV
-	convert -strip $< -colorspace RGB -depth 8 $@
+	convert -strip $< -colorspace RGB -depth 8 -comment "From $<" $@
+	touch --reference=$< $@
 
 py: $(PYc) # Not worried about output image right now $(PYo)
 
