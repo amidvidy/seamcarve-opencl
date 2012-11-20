@@ -263,7 +263,46 @@ cl_mem LoadImage(cl_context context, char *fileName, int &width, int &height)
     */
     if (errNum != CL_SUCCESS)
     {
-        std::cerr << "Error creating CL image object" << std::endl;
+        std::cerr << "Error creating CL image object:" << std::endl;
+        switch(errNum) {
+        case CL_INVALID_CONTEXT:
+            std::cerr << "Invalid OpenCL context." << std::endl;
+            break;
+        case CL_INVALID_VALUE:
+            std::cerr << "Invalid flags passed to clCreateImage" << std::endl;
+            break;
+        case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
+            std::cerr << "Invalid image_format passed to clCreateImage" << std::endl;
+            break;
+        case CL_INVALID_IMAGE_DESCRIPTOR:
+            std::cerr << "Invalid image_desc passed to clCreateImage" << std::endl;
+            break;
+        case CL_INVALID_IMAGE_SIZE:
+            std::cerr << "Image dimensions specified in image_desc exceed allowed "
+                      << "range for the given device context" 
+                      << std::endl;
+            break;
+        case CL_INVALID_HOST_PTR:
+            std::cerr << "Invalid host pointer passed to clCreateImage" << std::endl;
+            break;
+        case CL_IMAGE_FORMAT_NOT_SUPPORTED:
+            std::cerr << "The image format passed to clCreateImage is unsupported" << std::endl;
+            break;
+        case CL_MEM_OBJECT_ALLOCATION_FAILURE:
+            std::cerr << "Failure to allocate memory for image object" << std::endl;
+            break;
+        case CL_INVALID_OPERATION:
+            std::cerr << "No OpenCL devices in this context support images" << std::endl;
+            break;
+        case CL_OUT_OF_RESOURCES:
+            std::cerr << "Failure to allocate resources required by OpenCL on the device."
+                      << std::endl;
+            break;
+        case CL_OUT_OF_HOST_MEMORY:
+            std::cerr << "Failure to allocate resources required by OpenCL on the host."
+                      << std::endl;
+            break;
+        }
         return 0;
     }
 
