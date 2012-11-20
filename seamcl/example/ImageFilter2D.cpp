@@ -236,12 +236,11 @@ cl_mem LoadImage(cl_context context, char *fileName, int &width, int &height)
     clImageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     clImageDesc.image_width = width;
     clImageDesc.image_height = height;
-    clImageDesc.image_depth = 1;
-    clImageDesc.image_array_size = 1;
     clImageDesc.image_row_pitch = 0;
     clImageDesc.image_slice_pitch = 0;
     clImageDesc.num_mip_levels = 0;
     clImageDesc.num_samples = 0;
+    clImageDesc.buffer = NULL;
 
     // New in OpenCL 1.2, clCreateImage handles 1D, 2D, and 3D images
     clImage = clCreateImage(context,
