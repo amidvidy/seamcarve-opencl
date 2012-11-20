@@ -4,3 +4,8 @@ seamc/seamc
 seamc/out.*
 seamc/diff.*
 *~
+/ref_images/*/*
+!/ref_images/ORIG/*
+!/ref_images/CONV/*
+!/ref_images/*/carves
+!/ref_images/*/out.ppm
