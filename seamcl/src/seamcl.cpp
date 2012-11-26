@@ -54,7 +54,8 @@ cl::CommandQueue commandQueue(const cl::Context &ctx) {
 } // namespace setup {
 
 namespace image {
-    char * load(std::string fileName, int &height, int &width) {
+
+    char * loadHost(std::string fileName, int &height, int &width) {
         FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
         FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
 
@@ -69,6 +70,19 @@ namespace image {
 
         return buffer;
     }
+
+    cl::Image2D loadDevice(cl::Context &ctx, char *pixels, int &width, int &height) {
+        cl::ImageFormat imageFormat = cl::ImageFormat(CL_RGBA, CL_UNORM_INT8);
+        return cl::Image2D(ctx,
+                           (cl_mem_flags) CL_MEM_WRITE_ONLY,
+                           imageFormat,
+                           width,
+                           height,
+                           0,
+                           NULL,
+                           NULL);
+    }
+
 } // namespace image {
 
 int main(int argc, char** argv) {
@@ -83,7 +97,9 @@ int main(int argc, char** argv) {
 
     // Load image into a buffer
     int width, height;
-    char *pixels = image::load(std::string(argv[1]), height, width);
+    char *pixels = image::loadHost(std::string(argv[1]), height, width);
+
+    cl::Image2D imgBuffer = image::loadDevice(context, pixels, height, width);
 
     delete [] pixels;
 }
