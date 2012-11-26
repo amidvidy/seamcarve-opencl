@@ -85,4 +85,5 @@ int main(int argc, char** argv) {
     int width, height;
     char *pixels = image::load(std::string(argv[1]), height, width);
 
+    delete [] pixels;
 }
