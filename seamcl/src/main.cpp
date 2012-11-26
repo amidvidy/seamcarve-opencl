@@ -1,6 +1,7 @@
+// C
+#include <cstdlib>
 
 // STL
-
 #include <iostream>
 
 // OpenCL
@@ -52,7 +53,36 @@ cl::CommandQueue commandQueue(const cl::Context &ctx) {
 
 } // namespace setup {
 
+namespace image {
+    char * load(std::string fileName, int &height, int &width) {
+        FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
+        FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
+
+        image = FreeImage_ConvertTo32Bits(image);
+        width = FreeImage_GetWidth(image);
+        height = FreeImage_GetHeight(image);
+
+        char *buffer = new char[width * height * 4];
+        memcpy(buffer, FreeImage_GetBits(image), width * height * 4);
+
+        FreeImage_Unload(image);
+
+        return buffer;
+    }
+} // namespace image {
+
 int main(int argc, char** argv) {
+    if (argc < 2) {
+        std::cerr << "USAGE: seamcl <IMAGENAME>" << std::endl;
+        exit(-1);
+    }
+    // Create OpenCL context
     cl::Context context = setup::context();
+    // Create commandQueue
     cl::CommandQueue cmdQueue = setup::commandQueue(context);
+
+    // Load image into a buffer
+    int width, height;
+    char *pixels = image::load(std::string(argv[1]), height, width);
+
 }
