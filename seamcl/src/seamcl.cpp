@@ -365,7 +365,7 @@ namespace kernel {
                                                globalWorkSize,
                                                localWorkSize);
         if (errNum != CL_SUCCESS) {
-            std::cerr << "Error enqueuing kernel for execution." << std::endl;
+            std::cerr << "Error enqueuing blur kernel for execution." << std::endl;
             exit(-1);
         }
 
@@ -379,7 +379,7 @@ namespace kernel {
      * @param sampler An openCL image sampler object.
      * @param height The height of the input image.
      * @param width The width of the input image.
-     * @return A Buffer containing the gradient interpreted as a matrix of size height * width.
+     * @return A buffer containing the gradient interpreted as a matrix of size height * width.
      */
     cl::Buffer gradient(cl::Context &ctx,
                         cl::CommandQueue &cmdQueue,
@@ -387,7 +387,26 @@ namespace kernel {
                         cl::Sampler &sampler,
                         int height,
                         int width) {
-        
+        // Create output buffer
+        cl::Buffer resultMatrix = mem::buffer(ctx, cmdQueue, height * width);
+        // Setup kernel
+        cl::Kernel kernel = setup::kernel(ctx, std::string("GradientKernel.cl"));
+
+        cl_int errNum;
+
+        // Set kernel arguments
+        errNum = kernel.setArg(0, inputImage);
+        errNum |= kernel.setArg(1, resultMatrix);
+        errNum |= kernel.setArg(2, sampler);
+        errNum |= kernel.setArg(3, width);
+        errNum |= kernel.setArg(4, height);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueuing gradient kernel for execution." << std::endl;
+            exit(-1);
+        }
+
+        return resultMatrix;
     }
 
 } // namespace kernel {
