@@ -171,6 +171,55 @@ namespace image {
     }
 
     /**
+     * Saves the contents of an image object to disk.
+     * @param cmdQueue An openCL commandQueue object.
+     * @param image The image object to read data from.
+     * @param fileName The file in which to store the resulting image.
+     * @param height The height of the image.
+     * @param width The width of the image.
+     * @return Whether the operation was successful or not.
+     */
+    bool save(cl::CommandQueue &cmdQueue, cl::Image2D &image, std::string fileName, int height, int width) {
+        cl_int errNum;
+        char buffer[width * height * 4];
+        cl::size_t<3> origin;
+        origin.push_back(0);
+        origin.push_back(0);
+        origin.push_back(0);
+        cl::size_t<3> region;
+        region.push_back(width);
+        region.push_back(height);
+        region.push_back(1);
+
+        errNum = cmdQueue.enqueueWriteImage(image,
+                                            CL_TRUE,
+                                            origin,
+                                            region,
+                                            0, // row pitch is 0
+                                            0, // slice pitch is 0
+                                            buffer,
+                                            NULL, // no events
+                                            NULL);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error reading image data." << std::endl;
+            exit(-1);
+        }
+
+        FREE_IMAGE_FORMAT format = FreeImage_GetFIFFromFilename(fileName.c_str());
+        FIBITMAP *bitmap = FreeImage_ConvertFromRawBits((BYTE*)buffer,
+                                                       width,
+                                                       height,
+                                                       width * 4,
+                                                       32,
+                                                       0xFF000000,
+                                                       0x00FF0000,
+                                                       0x0000FF00);
+        return (FreeImage_Save(format, bitmap, fileName.c_str()) == TRUE) ? true : false;
+
+    }
+
+    /**
      * Creates a writable, empty image object in texture memory.
      * @param ctx An openCL context object.
      * @param height The desired height of the image object
@@ -244,8 +293,8 @@ namespace math {
 } // namespace math
 
 int main(int argc, char** argv) {
-    if (argc < 2) {
-        std::cerr << "USAGE: seamcl <IMAGENAME>" << std::endl;
+    if (argc < 3) {
+        std::cerr << "USAGE: seamcl <INPUT> <OUTPUT>" << std::endl;
         exit(-1);
     }
     // Create OpenCL context
@@ -282,9 +331,28 @@ int main(int argc, char** argv) {
     }
 
     // Determine local and global work size
+    cl::NDRange offset = cl::NDRange(0, 0);
     cl::NDRange localWorkSize = cl::NDRange(16, 16);
     cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                              math::roundUp(localWorkSize[1], height));
+
+    // Run kernel
+    errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                           offset,
+                                           globalWorkSize,
+                                           localWorkSize);
+    if (errNum != CL_SUCCESS) {
+        std::cerr << "Error enqueuing kernel for execution." << std::endl;
+        exit(-1);
+    }
+
+    // Save image to disk.
+    std::string outputFile(argv[2]);
+
+    if (!image::save(cmdQueue, outputImage, outputFile, height, width)) {
+        std::cerr << "Error writing output image: " << outputFile << std::endl;
+        return -1;
+    }
 
     std::cout << "SUCCESS!" << std::endl;
 
