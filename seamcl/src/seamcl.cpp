@@ -13,9 +13,17 @@
 // FreeImage
 #include "FreeImage.h"
 
+// Functions relating to configuring openCL objects
 namespace setup {
 
     // TODO(amidvidy): error handling
+
+    /**
+     * Creates an openCL context. The current preference is for a gpu context. In the future,
+     * it would be nice to give the user the option to interactively select which context they
+     * would like to use.
+     * @return An openCL context object.
+     */
     cl::Context context() {
         std::vector<cl::Platform> platformList;
         cl::Platform::get(&platformList);
@@ -30,6 +38,12 @@ namespace setup {
     }
 
     // TODO(amidvidy): error handling
+
+    /**
+     * Creates an openCL command queue.
+     * @param ctx An openCL context object.
+     * @return An openCL command queue object.
+     */
     cl::CommandQueue commandQueue(const cl::Context &ctx) {
         std::vector<cl::Device> devices = ctx.getInfo<CL_CONTEXT_DEVICES>();
 
@@ -56,6 +70,14 @@ namespace setup {
         return cl::CommandQueue(ctx, devices[0]);
     }
 
+    /**
+     * Creates an openCL kernel object. This actually involves three separate steps that can each fail,
+     * reading the text of the file from the OS filesystem, creating an openCL program object, and finally
+     * compiling the kernel for each available device.
+     * @param ctx An openCL context object.
+     * @param fileName The name of the file containing the kernel source.
+     * @return An OpenCL kernel object.
+     */
     cl::Kernel kernel(cl::Context &ctx, std::string fileName) {
         std::ifstream file(fileName.c_str());
         std::string programText((std::istreambuf_iterator<char>(file)),
@@ -103,8 +125,17 @@ namespace setup {
 
 } // namespace setup {
 
+// Functions relating to image handling
 namespace image {
 
+    /**
+     * Loads an image from a file into device texture memory.
+     * @param ctx An openCL context object.
+     * @param fileName The image file to use.
+     * @param height An int ref to read the height into for later use.
+     * @param width An int ref to read the width into for later use.
+     * @return An openCL image2D object representing the image on the device.
+     */
     cl::Image2D load(cl::Context &ctx, std::string fileName, int &height, int &width) {
         FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
         FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
@@ -139,6 +170,13 @@ namespace image {
         return img;
     }
 
+    /**
+     * Creates a writable, empty image object in texture memory.
+     * @param ctx An openCL context object.
+     * @param height The desired height of the image object
+     * @param width The desired width of the image object
+     * @return An openCL Image2D object representing the texture memory.
+     */
     cl::Image2D make(cl::Context &ctx, int height, int width) {
         cl_int errNum;
 
@@ -159,6 +197,12 @@ namespace image {
         return img;
     }
 
+    /**
+     * Creates an openCL sampler object for sampling continuous values from an image with
+     * hardware acceleration.
+     * @param ctx An openCL context object.
+     * @return An openCL sampler object.
+     */
     cl::Sampler sampler(cl::Context &ctx) {
         cl_int errNum;
 
@@ -166,7 +210,7 @@ namespace image {
                                           CL_FALSE, // Non-normalized coordinates
                                           CL_ADDRESS_CLAMP_TO_EDGE,
                                           CL_FILTER_NEAREST,
-                                          &errNum);
+       p                                   &errNum);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error creating CL sampler object." << std::endl;
