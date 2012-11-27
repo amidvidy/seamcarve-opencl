@@ -292,6 +292,65 @@ namespace math {
 
 } // namespace math
 
+// Wrapper functions around calling kernels
+namespace kernel {
+
+    /**
+     * Applies a gaussian blur filter to an image using openCL.
+     * @param ctx An openCL context object.
+     * @param cmdQueue An openCL command queue.
+     * @param sampler An openCL image sampler object.
+     * @param height The height of the input image.
+     * @param width The width of the input image.
+     * @return An Image2D object containing the resulting image data.
+     */
+    cl::Image2D blur(cl::Context &ctx,
+                     cl::CommandQueue &cmdQueue,
+                     cl::Image2D &inputImage,
+                     cl::Sampler &sampler,
+                     int height,
+                     int width) {
+
+        // Create output buffer
+        cl::Image2D outputImage = image::make(ctx, height, width);
+
+        // Create kernel
+        cl::Kernel kernel = setup::kernel(ctx, std::string("GaussianKernel.cl"));
+
+        // Set kernel arguments
+        cl_int errNum;
+
+        errNum = kernel.setArg(0, inputImage);
+        errNum |= kernel.setArg(1, outputImage);
+        errNum |= kernel.setArg(2, sampler);
+        errNum |= kernel.setArg(3, width);
+        errNum |= kernel.setArg(4, height);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting kernel arguments." << std::endl;
+            exit(-1);
+        }
+
+        // Determine local and global work size
+        cl::NDRange offset = cl::NDRange(0, 0);
+        cl::NDRange localWorkSize = cl::NDRange(16, 16);
+        cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
+                                                 math::roundUp(localWorkSize[1], height));
+        // Run kernel
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize);
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueuing kernel for execution." << std::endl;
+            exit(-1);
+        }
+
+        return outputImage;
+
+    }
+}
+
 int main(int argc, char** argv) {
     if (argc < 3) {
         std::cerr << "USAGE: seamcl <INPUT> <OUTPUT>" << std::endl;
@@ -306,44 +365,11 @@ int main(int argc, char** argv) {
     int width, height;
     cl::Image2D inputImage = image::load(context, std::string(argv[1]), height, width);
 
-    // Create output buffer
-    cl::Image2D outputImage = image::make(context, height, width);
-
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
 
-    // Make kernel object
-    cl::Kernel kernel = setup::kernel(context, std::string("GaussianKernel.cl"));
-
-
-    // Set kernel arguments
-    cl_int errNum;
-
-    errNum = kernel.setArg(0, inputImage);
-    errNum |= kernel.setArg(1, outputImage);
-    errNum |= kernel.setArg(2, sampler);
-    errNum |= kernel.setArg(3, width);
-    errNum |= kernel.setArg(4, height);
-
-    if (errNum != CL_SUCCESS) {
-        std::cerr << "Error setting kernel arguments." << std::endl;
-        exit(-1);
-    }
-
-    // Determine local and global work size
-    cl::NDRange offset = cl::NDRange(0, 0);
-    cl::NDRange localWorkSize = cl::NDRange(16, 16);
-    cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
-                                             math::roundUp(localWorkSize[1], height));
-    // Run kernel
-    errNum = cmdQueue.enqueueNDRangeKernel(kernel,
-                                           offset,
-                                           globalWorkSize,
-                                           localWorkSize);
-    if (errNum != CL_SUCCESS) {
-        std::cerr << "Error enqueuing kernel for execution." << std::endl;
-        exit(-1);
-    }
+    // Blur image
+    cl::Image2D outputImage = kernel::blur(context, cmdQueue, inputImage, sampler, height, width);
 
     // Save image to disk.
     std::string outputFile(argv[2]);
