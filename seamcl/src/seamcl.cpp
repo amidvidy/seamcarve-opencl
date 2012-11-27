@@ -210,7 +210,7 @@ namespace image {
                                           CL_FALSE, // Non-normalized coordinates
                                           CL_ADDRESS_CLAMP_TO_EDGE,
                                           CL_FILTER_NEAREST,
-       p                                   &errNum);
+                                          &errNum);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error creating CL sampler object." << std::endl;
