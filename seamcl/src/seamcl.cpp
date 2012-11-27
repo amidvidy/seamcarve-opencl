@@ -281,7 +281,10 @@ int main(int argc, char** argv) {
         exit(-1);
     }
 
-    
+    // Determine local and global work size
+    cl::NDRange localWorkSize = cl::NDRange(16, 16);
+    cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
+                                             math::roundUp(localWorkSize[1], height));
 
     std::cout << "SUCCESS!" << std::endl;
 
