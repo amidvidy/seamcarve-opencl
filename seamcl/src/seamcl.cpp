@@ -82,7 +82,7 @@ namespace setup {
         if (errNum != CL_SUCCESS) {
             std::cerr << "Failed to compile program." << std::endl;
             // TODO(amidvidy): show build log on failure
-            
+
             //std::string buildLog;
             //program.getBuildInfo<std::string>((cl_program_build_info) CL_PROGRAM_BUILD_LOG, buildLog);
             //std::cerr << buildLog;
@@ -123,12 +123,12 @@ namespace image {
         cl::ImageFormat imageFormat = cl::ImageFormat(CL_RGBA, CL_UNORM_INT8);
 
         cl::Image2D img =  cl::Image2D(ctx,
-                                       (cl_mem_flags) CL_MEM_WRITE_ONLY,
+                                       (cl_mem_flags) CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                        imageFormat,
                                        width,
                                        height,
                                        0,
-                                       NULL,
+                                       buffer,
                                        &errNum);
 
         if (errNum != CL_SUCCESS) {
@@ -139,7 +139,27 @@ namespace image {
         return img;
     }
 
-    cl::Sampler makeSampler(cl::Context &ctx) {
+    cl::Image2D make(cl::Context &ctx, int height, int width) {
+        cl_int errNum;
+
+        cl::ImageFormat imageFormat = cl::ImageFormat(CL_RGBA, CL_UNORM_INT8);
+
+        cl::Image2D img = cl::Image2D(ctx,
+                                      (cl_mem_flags) CL_MEM_READ_WRITE,
+                                      imageFormat,
+                                      width,
+                                      height,
+                                      0,
+                                      NULL,
+                                      &errNum);
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error creating image." << std::endl;
+            exit(-1);
+        }
+        return img;
+    }
+
+    cl::Sampler sampler(cl::Context &ctx) {
         cl_int errNum;
 
         cl::Sampler sampler = cl::Sampler(ctx,
@@ -171,11 +191,13 @@ int main(int argc, char** argv) {
 
     // Load image into a buffer
     int width, height;
+    cl::Image2D inputBuffer = image::load(context, std::string(argv[1]), height, width);
 
-    cl::Image2D imgBuffer = image::load(context, std::string(argv[1]), height, width);
+    // Create output buffer
+    cl::Image2D image = image::make(context, height, width);
 
     // Make sampler
-    cl::Sampler sampler = image::makeSampler(context);
+    cl::Sampler sampler = image::sampler(context);
 
     // Make kernel object
     cl::Kernel kernel = setup::kernel(context, std::string("ImageFilter2D.cl"));
