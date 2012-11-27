@@ -6,13 +6,15 @@ __kernel void image_gradient(__read_only image2d_t srcImg,
                              int width,
                              int height)
 {
+
+
      // Determine what portion of image to operate on:
      int2 leftPixelCoord = (int2) (get_global_id(0) - 1, get_global_id(1));
      int2 rightPixelCoord  = (int2) (get_global_id(0) + 1, get_global_id(1));
      int2 abovePixelCoord = (int2) (get_global_id(0), get_global_id(1) + 1);
      int2 belowPixelCoord = (int2) (get_global_id(0), get_global_id(1) - 1);
      int2 PixelCoord = (int2) (get_global_id(0), get_global_id(1));     // This is location of pixel whose gradient is being computed.
-
+     //     printf("START: global_id = (%i, %i)\n", get_global_id(0), get_global_id(1));
      // TODO: the coefficient weights to convert to grayscale:
      // (should be ported to CPU?)
      float4 luma_coef = (float4) (0.299f, 0.587f, 0.114f, 0.0f);
@@ -24,9 +26,11 @@ __kernel void image_gradient(__read_only image2d_t srcImg,
          float abovepixel = dot(luma_coef, read_imagef(srcImg, sampler, abovePixelCoord));
          float belowpixel = dot(luma_coef, read_imagef(srcImg, sampler, belowPixelCoord));
          float gradient = fabs(rightpixel - leftpixel) + fabs(abovepixel - belowpixel);
+         gradient *= 1024.0f;
+         gradient += 256;
 
-         // write results to matrix:
-         resultMatrix[get_global_id(0) + width * get_global_id(1)] = gradient;
-     }
+
+         resultMatrix[PixelCoord.x + width * PixelCoord.y] = gradient;
+    }
 }
 
