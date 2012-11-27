@@ -112,6 +112,11 @@ namespace kernel {
                                                globalWorkSize,
                                                localWorkSize);
 
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueuing gradient kernel for execution." << std::endl;
+            exit(-1);
+        }
+
         // TODO(amidvidy): make this debugging code
         // Read data into an image object
         cl::Image2D gradientImage = cl::Image2D(ctx,
@@ -153,12 +158,6 @@ namespace kernel {
             std::cerr << "Error writing gradient output image." << std::endl;
         }
         /** END DEBUGGING */
-
-
-        if (errNum != CL_SUCCESS) {
-            std::cerr << "Error enqueuing gradient kernel for execution." << std::endl;
-            exit(-1);
-        }
 
         return resultMatrix;
     }
