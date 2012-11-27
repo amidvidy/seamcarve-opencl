@@ -349,6 +349,7 @@ namespace kernel {
         return outputImage;
 
     }
+
 } // namespace kernel {
 
 int main(int argc, char** argv) {
