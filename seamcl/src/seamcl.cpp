@@ -123,7 +123,30 @@ namespace setup {
 
     }
 
+
 } // namespace setup {
+
+// Functions relating to allocating device memory, and marshalling data back and forth from the device.
+namespace mem {
+
+    cl::Buffer buffer(cl::Context &ctx,
+                      cl::CommandQueue &cmdQueue,
+                      int numBytes) {
+        cl_int errNum;
+        cl::Buffer buff = cl::Buffer(ctx,
+                                     CL_MEM_READ_WRITE,
+                                     numBytes,
+                                     NULL,
+                                     &errNum);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error allocating a buffer on the device." << std::endl;
+            exit(-1);
+        }
+
+    }
+
+} // namespace mem {
 
 // Functions relating to image handling
 namespace image {
@@ -347,7 +370,24 @@ namespace kernel {
         }
 
         return outputImage;
+    }
 
+    /**
+     * Computes the gradient of an image using openCL.
+     * @param ctx An openCL context object.
+     * @param cmdQueue An openCL command queue.
+     * @param sampler An openCL image sampler object.
+     * @param height The height of the input image.
+     * @param width The width of the input image.
+     * @return A Buffer containing the gradient interpreted as a matrix of size height * width.
+     */
+    cl::Buffer gradient(cl::Context &ctx,
+                        cl::CommandQueue &cmdQueue,
+                        cl::Image2D &inputImage,
+                        cl::Sampler &sampler,
+                        int height,
+                        int width) {
+        
     }
 
 } // namespace kernel {
