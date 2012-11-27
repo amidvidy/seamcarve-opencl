@@ -313,7 +313,7 @@ int main(int argc, char** argv) {
     cl::Sampler sampler = image::sampler(context);
 
     // Make kernel object
-    cl::Kernel kernel = setup::kernel(context, std::string("ImageFilter2D.cl"));
+    cl::Kernel kernel = setup::kernel(context, std::string("GaussianKernel.cl"));
 
 
     // Set kernel arguments
