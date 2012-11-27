@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
         exit(-1);
     } else {
         char *image_file = argv[1];
-	int new_width = (argc > 2) ? atoi(argv[2]) : -9;
+	int new_width = (argc > 2) ? atoi(argv[2]) : -10;
 	int new_height = (argc > 3) ? atoi(argv[3]) : 0;
         printf("%s %d %d\n", image_file, new_width, new_height);
         process(image_file, new_width, new_height);

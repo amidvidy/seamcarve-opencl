@@ -1,4 +1,4 @@
-REFDIR ?= ../ref_images/castle-9
+REFDIR ?= ../ref_images/castle.jpg_py10
 IMGEXT ?= tif
 TESTIMG ?= $(REFDIR)/in.$(IMGEXT)
 REFIMG ?= $(REFDIR)/out.$(IMGEXT)
