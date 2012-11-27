@@ -91,6 +91,24 @@ namespace image {
         return img;
     }
 
+    cl::Sampler makeSampler(cl::Context &ctx) {
+        cl_int errNum;
+
+        cl::Sampler sampler = cl::Sampler(ctx,
+                                          CL_FALSE, // Non-normalized coordinates
+                                          CL_ADDRESS_CLAMP_TO_EDGE,
+                                          CL_FILTER_NEAREST,
+                                          &errNum);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error creating CL sampler object." << std::endl;
+            exit(-1);
+        }
+
+        return sampler;
+
+    }
+
 } // namespace image {
 
 int main(int argc, char** argv) {
@@ -108,5 +126,7 @@ int main(int argc, char** argv) {
 
     cl::Image2D imgBuffer = image::load(context, std::string(argv[1]), height, width);
 
+    // Make sampler
+    cl::Sampler sampler = image::makeSampler(context);
 
 }
