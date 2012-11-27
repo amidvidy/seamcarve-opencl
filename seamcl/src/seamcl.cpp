@@ -402,6 +402,21 @@ namespace kernel {
         errNum |= kernel.setArg(4, height);
 
         if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting gradient kernel arguments." << std::endl;
+            exit(-1);
+        }
+
+        cl::NDRange offset = cl::NDRange(0, 0);
+        cl::NDRange localWorkSize = cl::NDRange(16, 16);
+        cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
+                                                 math::roundUp(localWorkSize[1], height));
+
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize);
+
+        if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing gradient kernel for execution." << std::endl;
             exit(-1);
         }
