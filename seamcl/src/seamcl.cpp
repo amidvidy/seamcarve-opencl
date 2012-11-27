@@ -191,16 +191,31 @@ int main(int argc, char** argv) {
 
     // Load image into a buffer
     int width, height;
-    cl::Image2D inputBuffer = image::load(context, std::string(argv[1]), height, width);
+    cl::Image2D inputImage = image::load(context, std::string(argv[1]), height, width);
 
     // Create output buffer
-    cl::Image2D image = image::make(context, height, width);
+    cl::Image2D outputImage = image::make(context, height, width);
 
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
 
     // Make kernel object
     cl::Kernel kernel = setup::kernel(context, std::string("ImageFilter2D.cl"));
+
+
+    // Set kernel arguments
+    cl_int errNum;
+
+    errNum = kernel.setArg(0, inputImage);
+    errNum |= kernel.setArg(1, outputImage);
+    errNum |= kernel.setArg(2, sampler);
+    errNum |= kernel.setArg(3, width);
+    errNum |= kernel.setArg(4, height);
+
+    if (errNum != CL_SUCCESS) {
+        std::cerr << "Error setting kernel arguments." << std::endl;
+        exit(-1);
+    }
 
     std::cout << "SUCCESS!" << std::endl;
 
