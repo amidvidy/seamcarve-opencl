@@ -9,3 +9,10 @@ seamc/diff.*
 #!/ref_images/CONV/*
 !/ref_images/*/carves
 #!/ref_images/*/out.ppm
+
+*.log
+*ImageFilter2D
+*seamcl
+*.tif
+*.data
+*.old
