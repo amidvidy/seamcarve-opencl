@@ -26,7 +26,7 @@ __kernel void image_gradient(__read_only image2d_t srcImg,
          float abovepixel = dot(luma_coef, read_imagef(srcImg, sampler, abovePixelCoord));
          float belowpixel = dot(luma_coef, read_imagef(srcImg, sampler, belowPixelCoord));
          // Slightly different formulation of gradient
-         float gradient = sqrt(pow(rightpixel - leftpixel, 2) + pow(abovepixel - belowpixel, 2))
+         float gradient = sqrt(pow(rightpixel - leftpixel, 2) + pow(abovepixel - belowpixel, 2)) * 1000.0f + 500.0f;
 
          resultMatrix[PixelCoord.x + width * PixelCoord.y] = gradient;
     }
