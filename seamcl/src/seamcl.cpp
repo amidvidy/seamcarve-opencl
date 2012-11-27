@@ -12,6 +12,7 @@
 
 namespace setup {
 
+    // TODO(amidvidy): error handling
 cl::Context context() {
     std::vector<cl::Platform> platformList;
     cl::Platform::get(&platformList);
@@ -25,6 +26,7 @@ cl::Context context() {
     return cl::Context(CL_DEVICE_TYPE_GPU, cprops);
 }
 
+    // TODO(amidvidy): error handling
 cl::CommandQueue commandQueue(const cl::Context &ctx) {
     std::vector<cl::Device> devices = ctx.getInfo<CL_CONTEXT_DEVICES>();
 
@@ -55,7 +57,7 @@ cl::CommandQueue commandQueue(const cl::Context &ctx) {
 
 namespace image {
 
-    char * loadHost(std::string fileName, int &height, int &width) {
+    cl::Image2D load(cl::Context &ctx, std::string fileName, int &height, int &width) {
         FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
         FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
 
@@ -63,24 +65,30 @@ namespace image {
         width = FreeImage_GetWidth(image);
         height = FreeImage_GetHeight(image);
 
-        char *buffer = new char[width * height * 4];
+        char buffer[width * height * 4];
+
         memcpy(buffer, FreeImage_GetBits(image), width * height * 4);
 
         FreeImage_Unload(image);
 
-        return buffer;
-    }
-
-    cl::Image2D loadDevice(cl::Context &ctx, char *pixels, int &width, int &height) {
+        cl_int errNum;
         cl::ImageFormat imageFormat = cl::ImageFormat(CL_RGBA, CL_UNORM_INT8);
-        return cl::Image2D(ctx,
-                           (cl_mem_flags) CL_MEM_WRITE_ONLY,
-                           imageFormat,
-                           width,
-                           height,
-                           0,
-                           NULL,
-                           NULL);
+
+        cl::Image2D img =  cl::Image2D(ctx,
+                                       (cl_mem_flags) CL_MEM_WRITE_ONLY,
+                                       imageFormat,
+                                       width,
+                                       height,
+                                       0,
+                                       NULL,
+                                       &errNum);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error loading image: " << fileName << std::endl;
+            exit(-1);
+        }
+
+        return img;
     }
 
 } // namespace image {
@@ -97,9 +105,8 @@ int main(int argc, char** argv) {
 
     // Load image into a buffer
     int width, height;
-    char *pixels = image::loadHost(std::string(argv[1]), height, width);
 
-    cl::Image2D imgBuffer = image::loadDevice(context, pixels, height, width);
+    cl::Image2D imgBuffer = image::load(context, std::string(argv[1]), height, width);
 
-    delete [] pixels;
+
 }
