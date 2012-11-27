@@ -2,7 +2,10 @@
 #include <cstdlib>
 
 // STL
+#include <fstream>
 #include <iostream>
+#include <string>
+#include <streambuf>
 
 // OpenCL
 #include <CL/cl.hpp>
@@ -53,6 +56,50 @@ namespace setup {
         return cl::CommandQueue(ctx, devices[0]);
     }
 
+    cl::Kernel kernel(cl::Context &ctx, std::string fileName) {
+        std::ifstream file(fileName.c_str());
+        std::string programText((std::istreambuf_iterator<char>(file)),
+                                std::istreambuf_iterator<char>());
+
+        cl::Program::Sources sources;
+        // add one to size for null terminator
+        sources.push_back(std::make_pair(programText.c_str(), programText.size() + 1));
+
+        cl_int errNum;
+
+        cl::Program program = cl::Program(ctx,
+                                          sources,
+                                          &errNum);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Failed to create CL program from source." << std::endl;
+            exit(-1);
+        }
+
+        // TODO(amidvidy): figure out how to reuse the device vector we created earlier?
+        errNum = program.build(ctx.getInfo<CL_CONTEXT_DEVICES>());
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Failed to compile program." << std::endl;
+            // TODO(amidvidy): show build log on failure
+            
+            //std::string buildLog;
+            //program.getBuildInfo<std::string>((cl_program_build_info) CL_PROGRAM_BUILD_LOG, buildLog);
+            //std::cerr << buildLog;
+            exit(-1);
+        }
+
+
+        cl::Kernel kernel = cl::Kernel(program, "gaussian_filter", &errNum);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Failed to create kernel" << std::endl;
+            exit(-1);
+        }
+
+        return kernel;
+
+    }
 
 } // namespace setup {
 
@@ -129,5 +176,10 @@ int main(int argc, char** argv) {
 
     // Make sampler
     cl::Sampler sampler = image::makeSampler(context);
+
+    // Make kernel object
+    cl::Kernel kernel = setup::kernel(context, std::string("ImageFilter2D.cl"));
+
+    std::cout << "SUCCESS!" << std::endl;
 
 }
