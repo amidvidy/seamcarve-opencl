@@ -191,15 +191,15 @@ namespace image {
         region.push_back(height);
         region.push_back(1);
 
-        errNum = cmdQueue.enqueueWriteImage(image,
-                                            CL_TRUE,
-                                            origin,
-                                            region,
-                                            0, // row pitch is 0
-                                            0, // slice pitch is 0
-                                            buffer,
-                                            NULL, // no events
-                                            NULL);
+        errNum = cmdQueue.enqueueReadImage(image,
+                                           CL_TRUE,
+                                           origin,
+                                           region,
+                                           0, // row pitch is 0
+                                           0, // slice pitch is 0
+                                           buffer,
+                                           NULL, // no events
+                                           NULL);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error reading image data." << std::endl;
@@ -335,7 +335,6 @@ int main(int argc, char** argv) {
     cl::NDRange localWorkSize = cl::NDRange(16, 16);
     cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                              math::roundUp(localWorkSize[1], height));
-
     // Run kernel
     errNum = cmdQueue.enqueueNDRangeKernel(kernel,
                                            offset,
