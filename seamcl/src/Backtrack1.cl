@@ -4,7 +4,7 @@
 // To be launched as a 1x1 "kernel"?
 
 __kernel void Backtrack(
-    __constant float* costMatrix, // Cost to reach each pixel.
+    __global float* costMatrix, // Cost to reach each pixel.
     __global int* carveArray, // Array of x-index to cut for each y.
     int width,      // costMatrix width (matches image width)
     int height,     //   ...and height.
@@ -12,41 +12,32 @@ __kernel void Backtrack(
 ) {
 // Index into matrix (either row or column major)
 #define pROW(M,Y) (M)+((Y)*pitch)
-    int inset=0;
-    __constant float *ROW; // Points to base of each matrix row
-    int y = height-inset-1; // The row being contemplated
-    int carveX = inset; // The currently contemplated carve-x on each row
+    __global float *ROW; // Points to base of each matrix row
+    int y = height-1; // The row being contemplated (starts at bottom)
+    int carveX = 1; // The currently contemplated carve-x on each row
     
     ROW = pROW(costMatrix, y);
     int x = carveX;
     float min_v = ROW[x]; // Could also just start with row[carveX] value
-    while (++x < (width-inset)) {
+    while (++x < (width-1)) {
         if (ROW[x] < min_v) {
             min_v = ROW[x]; // Keep track of min, though we just care about
             carveX = x;     //   which index holds the min.
         }
     }
-    // Repeat first carve through bottom inset-border
-    for (int tempY = height-1; tempY >= y; y--) {
-        carveArray[y] = carveX;
-    }
-    // Repeat last carve through top inset-border
-    while (y > inset) {
+    carveArray[y] = carveX;
+    // Repeat last carve through top
+    while (y >= 0) {
         ROW = pROW(costMatrix, y);
-        const float L = ROW[carveX-1], C = ROW[carveX], R = ROW[carveX+1]; // TODO: grab these with fancy 3-fer fetch
+        const float L = (carveX < 1) ? MAXFLOAT : ROW[carveX-1];
+        const float C = ROW[carveX];
+        const float R = (carveX >= width) ? MAXFLOAT : ROW[carveX+1];
         if (L < C) { // Backtrack along minimal energy between three competitors
             carveX += (L < R) ? -1 : 1;
         } else {
             carveX += (C < R) ?  0 : 1;
         }
-        // Clip to left & right inset-borders
-        if (carveX > (width - inset)) carveX = (width - inset);
-        if (carveX < inset) carveX = inset;
         carveArray[y] = carveX;
-    }
-    // Repeat last carve through top inset-border
-    while (y > 0) {
-        carveArray[y--] = carveX;
     }
 }
 
