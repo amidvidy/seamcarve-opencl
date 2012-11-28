@@ -20,6 +20,7 @@
 #include "math.hpp"
 #include "mem.hpp"
 #include "setup.hpp"
+#include "verify.hpp"
 
 
 int main(int argc, char** argv) {
@@ -40,14 +41,12 @@ int main(int argc, char** argv) {
 
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
+
+    // Allocate temp space for blurred image
     cl::Image2D blurredImage = image::make(context, height, width);
-    //cl::Image2D blurredImage = kernel::blur(context, cmdQueue, inputImage, sampler, height, width);
 
-    // Calculate gradient
-    //cl::Buffer gradient = kernel::gradient(context, cmdQueue, inputImage, sampler, height, width);
+    // Allocate space on device for energy matrix
     cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
-
-
 
     // Outer iterator
     //while (width > desiredWidth || height > desiredHeight) {

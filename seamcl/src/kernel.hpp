@@ -9,6 +9,7 @@
 #include "setup.hpp"
 #include "math.hpp"
 #include "mem.hpp"
+#include "verify.hpp"
 
 // Wrapper functions around calling kernels
 namespace kernel {
@@ -187,6 +188,29 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(16);
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width));
 
+        //TODO(amidvidy): this should be configurable with a flag
+
+        /** DEBUGGING */
+        float *originalEnergyMatrix = new float[width * height];
+        size_t copyOffset = 0;
+        size_t size = width * height * sizeof(float);
+        // read in original data
+        errNum = cmdQueue.enqueueReadBuffer(energyMatrix,
+                                            CL_TRUE,
+                                            copyOffset,
+                                            size,
+                                            (void *) originalEnergyMatrix,
+                                            NULL,
+                                            NULL);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error reading original energyMatrix" << std::endl;
+            delete [] originalEnergyMatrix;
+            exit(-1);
+        }
+
+        /** END DEBUGGING **/
+
         errNum = cmdQueue.enqueueNDRangeKernel(kernel,
                                                offset,
                                                globalWorkSize,
@@ -194,8 +218,30 @@ namespace kernel {
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
+            delete [] originalEnergyMatrix;
             exit(-1);
         }
+
+        /** DEBUGGING **/
+        float *deviceResult = new float[width * height];
+        errNum = cmdQueue.enqueueReadBuffer(energyMatrix,
+                                            CL_TRUE,
+                                            copyOffset,
+                                            size,
+                                            (void *) deviceResult,
+                                            NULL,
+                                            NULL);
+
+        //if(!verify::computeSeams(deviceResult, originalEnergyMatrix, inset, width, height, pitch)) {
+        //std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
+        //            delete [] originalEnergyMatrix;
+        //            delete [] deviceResult;
+        //            exit(-1);
+        //}
+
+        delete [] originalEnergyMatrix;
+        delete [] deviceResult;
+        /** END DEBUGGING **/
     }
 
 
