@@ -22,15 +22,13 @@ namespace kernel {
      * @param width The width of the input image.
      * @return An Image2D object containing the resulting image data.
      */
-    cl::Image2D blur(cl::Context &ctx,
-                     cl::CommandQueue &cmdQueue,
-                     cl::Image2D &inputImage,
-                     cl::Sampler &sampler,
-                     int height,
-                     int width) {
-
-        // Create output buffer
-        cl::Image2D outputImage = image::make(ctx, height, width);
+    void blur(cl::Context &ctx,
+              cl::CommandQueue &cmdQueue,
+              cl::Image2D &inputImage,
+              cl::Image2D &outputImage,
+              cl::Sampler &sampler,
+              int height,
+              int width) {
 
         // Create kernel
         cl::Kernel kernel = setup::kernel(ctx, std::string("GaussianKernel.cl"), std::string("gaussian_filter"));
@@ -64,27 +62,28 @@ namespace kernel {
             exit(-1);
         }
 
-        return outputImage;
     }
 
     /**
      * Computes the gradient of an image using openCL.
      * @param ctx An openCL context object.
      * @param cmdQueue An openCL command queue.
+     * @param inputImage The image to blur
+     * @param resultMatrix An openCL buffer to store the output in.
      * @param sampler An openCL image sampler object.
      * @param height The height of the input image.
      * @param width The width of the input image.
      * @return A buffer containing the gradient interpreted as a matrix of size height * width.
      */
-    cl::Buffer gradient(cl::Context &ctx,
-                        cl::CommandQueue &cmdQueue,
-                        cl::Image2D &inputImage,
-                        cl::Sampler &sampler,
-                        int height,
-                        int width) {
+    void gradient(cl::Context &ctx,
+                  cl::CommandQueue &cmdQueue,
+                  cl::Image2D &inputImage,
+                  cl::Buffer &resultMatrix,
+                  cl::Sampler &sampler,
+                  int height,
+                  int width) {
 
-        // Create output buffer
-        cl::Buffer resultMatrix = mem::buffer(ctx, cmdQueue, height * width * sizeof(float));
+
         // Setup kernel
         cl::Kernel kernel = setup::kernel(ctx, std::string("GradientKernel.cl"), std::string("image_gradient"));
 
@@ -157,7 +156,6 @@ namespace kernel {
         image::save(cmdQueue, gradientImage, std::string("gradient_output.tif"), height, width);
         /** END DEBUGGING */
 
-        return resultMatrix;
     }
 
 } // namespace kernel {
