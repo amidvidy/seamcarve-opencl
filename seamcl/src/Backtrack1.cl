@@ -1,25 +1,53 @@
-// Identify a carve to make by sweeping bottom to top along
+// Identify a carveArray to make by sweeping bottom to top along
 //   least energy path.
 
 // To be launched as a 1x1 "kernel"?
 
 __kernel void Backtrack(
-    __global __read_only float* costMatrix, // Cost to reach each pixel.
-    __global int* carve, // Array of x-index to cut for each y.
+    __constant float* costMatrix, // Cost to reach each pixel.
+    __global int* carveArray, // Array of x-index to cut for each y.
     int inset,      // # of pixels at edges of image to ignore.
     int width,      // costMatrix width (matches image width)
     int height,     //   ...and height.
     int pitch       // Distance to advance a pointer into matrix for each row (or col)
 ) {
 // Index into matrix (either row or column major)
-#define rM(M,X,Y) (M)[((Y)*pitch+(X))]
-#define cM(M,X,Y) (M)[((X)*pitch+(Y))]
-    int idx = inset;
-    float min_v = 100000000.0; // TODO: Use "float::max"???
+#define pROW(M,Y) (M)+((Y)*pitch)
     
-    for (int y = height-1; y >= 0; y--) {
-        //rM(ioMatrix, x, y)
-        carve[y] = width/height;
+    __constant float *ROW; // Points to base of each matrix row
+    int y = height-inset-1; // The row being contemplated
+    int carveX = inset; // The currently contemplated carve-x on each row
+    
+    ROW = pROW(costMatrix, y);
+    int x = carveX;
+    float min_v = ROW[x]; // Could also just start with row[carveX] value
+    while (++x < (width-inset)) {
+        if (ROW[x] < min_v) {
+            min_v = ROW[x]; // Keep track of min, though we just care about
+            carveX = x;     //   which index holds the min.
+        }
+    }
+    // Repeat first carve through bottom inset-border
+    for (int tempY = height-1; tempY >= y; y--) {
+        carveArray[y] = carveX;
+    }
+    // Repeat last carve through top inset-border
+    while (y > inset) {
+        ROW = pROW(costMatrix, y);
+        const float L = ROW[carveX-1], C = ROW[carveX], R = ROW[carveX+1]; // TODO: grab these with fancy 3-fer fetch
+        if (L < C) { // Backtrack along minimal energy between three competitors
+            carveX += (L < R) ? -1 : 1;
+        } else {
+            carveX += (C < R) ?  0 : 1;
+        }
+        // Clip to left & right inset-borders
+        if (carveX > (width - inset)) carveX = (width - inset);
+        if (carveX < inset) carveX = inset;
+        carveArray[y] = carveX;
+    }
+    // Repeat last carve through top inset-border
+    while (y > 0) {
+        carveArray[y--] = carveX;
     }
 }
 
