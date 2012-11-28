@@ -11,27 +11,28 @@ __kernel void Backtrack(
     int pitch       // Distance to advance a pointer into matrix for each row (or col)
 ) {
 // Index into matrix (either row or column major)
-#define pROW(M,Y) (M)+((Y)*pitch)
+#define pROW(M,Y) ((M)+((Y)*pitch))
+    const int width_m1 = width-1;
     __global float *ROW; // Points to base of each matrix row
     int y = height-1; // The row being contemplated (starts at bottom)
-    int carveX = 1; // The currently contemplated carve-x on each row
+    int carveX = 0; // The currently contemplated carve-x on each row
     
     ROW = pROW(costMatrix, y);
     int x = carveX;
     float min_v = ROW[x]; // Could also just start with row[carveX] value
-    while (++x < (width-1)) {
+    while (++x < width) {
         if (ROW[x] < min_v) {
             min_v = ROW[x]; // Keep track of min, though we just care about
             carveX = x;     //   which index holds the min.
         }
     }
     carveArray[y] = carveX;
-    // Repeat last carve through top
+    // Continue carve upward to top
     while (y >= 0) {
         ROW = pROW(costMatrix, y);
         const float L = (carveX < 1) ? MAXFLOAT : ROW[carveX-1];
         const float C = ROW[carveX];
-        const float R = (carveX >= width) ? MAXFLOAT : ROW[carveX+1];
+        const float R = (carveX >= width_m1) ? MAXFLOAT : ROW[carveX+1];
         if (L < C) { // Backtrack along minimal energy between three competitors
             carveX += (L < R) ? -1 : 1;
         } else {
