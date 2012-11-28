@@ -49,7 +49,6 @@ namespace verify {
             }
         }
 
-
         std::cerr << "height\t" << height << std::endl;
         std::cerr << "width\t" << width << std::endl;
 
