@@ -3,6 +3,7 @@
 
 // STL
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <string>
 #include <streambuf>
@@ -22,10 +23,26 @@
 
 
 int main(int argc, char** argv) {
-    if (argc < 3) {
-        std::cerr << "USAGE: seamcl <INPUT> <OUTPUT>" << std::endl;
+    if (argc < 5) {
+        std::cerr << "USAGE: seamcl <INPUT> <OUTPUT> <DESIRED WIDTH> <DESIRED HEIGHT>" << std::endl;
         exit(-1);
     }
+
+    // Parse arguments
+    std::string inputFile(argv[1]);
+    std::string outputFile(argv[2]);
+
+    std::istringstream s1(argv[3]);
+    std::istringstream s2(argv[4]);
+    int desiredWidth, desiredHeight;
+    if (! (s1 >> desiredWidth)) {
+        std::cerr << "DESIRED WIDTH must be an integer." << std::endl;
+        exit(-1);
+    } else if (! (s2 >> desiredHeight)) {
+        std::cerr << "DESIRED HEIGHT must be an integer." << std::endl;
+        exit(-1);
+    }
+
     // Create OpenCL context
     cl::Context context = setup::context();
     // Create commandQueue
@@ -45,8 +62,6 @@ int main(int argc, char** argv) {
     cl::Buffer gradient = kernel::gradient(context, cmdQueue, inputImage, sampler, height, width);
 
     // Save image to disk.
-    std::string outputFile(argv[2]);
-
     if (!image::save(cmdQueue, outputImage, outputFile, height, width)) {
         std::cerr << "Error writing output image: " << outputFile << std::endl;
         return -1;
