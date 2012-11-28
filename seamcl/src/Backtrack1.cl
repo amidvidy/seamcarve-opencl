@@ -10,14 +10,13 @@ __kernel void Backtrack(
     int width,      // costMatrix width (matches image width)
     int height,     //   ...and height.
     int pitch       // Distance to advance a pointer into matrix for each row (or col)
-} {
+) {
 // Index into matrix (either row or column major)
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
 #define cM(M,X,Y) (M)[((X)*pitch+(Y))]
     int idx = inset;
-    min_v = 100000000.0; // TODO: Use "float::max"???
+    float min_v = 100000000.0; // TODO: Use "float::max"???
     
-    for (int i = idx; i < 
     for (int y = height-1; y >= 0; y--) {
         //rM(ioMatrix, x, y)
         carve[y] = width/height;
