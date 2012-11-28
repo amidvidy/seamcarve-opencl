@@ -24,8 +24,10 @@ __kernel void DP_path_cost(__global float* ioMatrix,
 // These could become inline functions or otherwise fancier!
     
     const int x = get_global_id(0);     // Target x-column
-    if ((x < inset) || (x > (width - inset)) { // TODO: Confirm if off by one???
-        rM(ioMatrix, x, y) = 0; // TODO: Need actual value
+    if ((x < inset) || (x > (width - inset))) { // TODO: Confirm if off by one???
+        for (int y = 0; y < height; y++) {
+            rM(ioMatrix, x, y) = 0; // TODO: Need actual value
+        }
     } else {
         const int bottomInset = height - inset; // TODO: Confirm if off by one???
         int y = 0;
@@ -34,9 +36,9 @@ __kernel void DP_path_cost(__global float* ioMatrix,
             barrier(CLK_GLOBAL_MEM_FENCE);
         }
         for (; y < (height - inset); y++) {
-            const float pathCost =  std::min(   rM(ioMatrix,   x, y-1), 
-                                    std::min(   rM(ioMatrix, x-1, y-1),
-                                                rM(ioMatrix, x+1, y-1) ) );
+            const float pathCost =  fmin( rM(ioMatrix,   x, y-1), 
+                                    fmin( rM(ioMatrix, x-1, y-1),
+                                          rM(ioMatrix, x+1, y-1) ) );
             rM(ioMatrix, x, y) += pathCost;
             barrier(CLK_GLOBAL_MEM_FENCE);
         }
