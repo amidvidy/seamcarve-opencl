@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 
 
     // Perform dynamic programming top-bottom
-    kernel::computeSeams(context, cmdQueue, energyMatrix, 1, width, height, width);
+    kernel::computeSeams(context, cmdQueue, energyMatrix, width, height, width);
     // TODO: transpose and perform dynamic programming left-right
 
     //}

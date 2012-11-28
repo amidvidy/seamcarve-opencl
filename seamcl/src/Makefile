@@ -18,7 +18,7 @@ seamcl.o : image.hpp kernel.hpp math.hpp mem.hpp setup.hpp
 	g++ -c -g seamcl.cpp
 
 $(BUILDDIR)/%.out: %.cl | $(BUILDDIR)
-	clcc -o $@ $<
+	clcc --add_headers -o $@ $<
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)

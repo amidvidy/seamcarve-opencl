@@ -6,14 +6,13 @@
 __kernel void Backtrack(
     __constant float* costMatrix, // Cost to reach each pixel.
     __global int* carveArray, // Array of x-index to cut for each y.
-    int inset,      // # of pixels at edges of image to ignore.
     int width,      // costMatrix width (matches image width)
     int height,     //   ...and height.
     int pitch       // Distance to advance a pointer into matrix for each row (or col)
 ) {
 // Index into matrix (either row or column major)
 #define pROW(M,Y) (M)+((Y)*pitch)
-    
+    int inset=0;
     __constant float *ROW; // Points to base of each matrix row
     int y = height-inset-1; // The row being contemplated
     int carveX = inset; // The currently contemplated carve-x on each row

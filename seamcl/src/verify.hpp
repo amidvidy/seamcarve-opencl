@@ -12,6 +12,7 @@
 #include <CL/cl.hpp>
 
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
+#define min3(A,B,C) (std::min((A),std::min((B),(C))))
 
 // Checks to ensure that kernels produce correct output
 namespace verify {
@@ -31,22 +32,24 @@ namespace verify {
 
     bool computeSeams(float* deviceResult,
                       float* originalEnergyMatrix,
-                      int inset,
                       int width,
                       int height,
                       int pitch) {
 
 
         std::cerr << "in verify::computeSeams" << std::endl;
-        float *hostResult = new float[width * height];
-        memcpy(hostResult, originalEnergyMatrix, width * height * sizeof(float));
+        float *hostResult = new float[pitch * height];
+        memcpy(hostResult, originalEnergyMatrix, pitch * height * sizeof(float));
 
-        for (int y = inset; y < height; ++y) {
-            for (int x = inset; x < (width - inset); ++x) {
-                rM(hostResult, x, y) = rM(originalEnergyMatrix, x, y) + std::min(rM(hostResult, x, y-1),
-                                                                                 std::min(rM(hostResult, x-1, y-1),
-                                                                                          rM(hostResult, x+1, y-1)));
+        for (int y = 0; y < height; ++y) {
+            int x = 0;
+            rM(hostResult, x, y) = FLT_MAX;
+            while (++x < (width-1)) {
+                const float pathCost = (y < 1) ? 0.0f :
+                    min3(rM(hostResult, x, y-1), rM(hostResult, x-1, y-1), rM(hostResult, x+1, y-1));
+                rM(hostResult, x, y) = rM(originalEnergyMatrix, x, y) + pathCost;
             }
+            rM(hostResult, x, y) = FLT_MAX;
         }
 
         std::cerr << "height\t" << height << std::endl;
@@ -66,8 +69,8 @@ namespace verify {
         bool correct = true;
 
         float epsilon = 0.00001f;
-        for (int x = inset; x < width - inset; ++x) {
-            for (int y = inset; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
                 if (fabsf(rM(hostResult, x, y) - rM(deviceResult, x, y)) > epsilon) {
                     //std::cerr << "Mismatch at (" << x << ", " << y << ") " << std::endl;
                     //std::cerr << "Expected:\t" << rM(hostResult, x, y) << std::endl;

@@ -162,7 +162,6 @@ namespace kernel {
     void computeSeams(cl::Context &ctx,
                       cl::CommandQueue &cmdQueue,
                       cl::Buffer &energyMatrix,
-                      int inset,
                       int width,
                       int height,
                       int pitch) {
@@ -174,10 +173,9 @@ namespace kernel {
 
         // Set kernel arguments
         errNum = kernel.setArg(0, energyMatrix);
-        errNum |= kernel.setArg(1, inset);
-        errNum |= kernel.setArg(2, width);
-        errNum |= kernel.setArg(3, height);
-        errNum |= kernel.setArg(4, pitch);
+        errNum |= kernel.setArg(1, width);
+        errNum |= kernel.setArg(2, height);
+        errNum |= kernel.setArg(3, pitch);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting computeSeam kernel arguments." << std::endl;
@@ -232,7 +230,7 @@ namespace kernel {
                                             NULL,
                                             NULL);
 
-        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, inset, width, height, pitch)) {
+        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch)) {
             std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
             delete [] originalEnergyMatrix;
             delete [] deviceResult;
