@@ -40,15 +40,31 @@ int main(int argc, char** argv) {
 
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
-
-    // Blur image
-    cl::Image2D outputImage = kernel::blur(context, cmdQueue, inputImage, sampler, height, width);
+    cl::Image2D blurredImage = image::make(context, height, width);
+    //cl::Image2D blurredImage = kernel::blur(context, cmdQueue, inputImage, sampler, height, width);
 
     // Calculate gradient
-    cl::Buffer gradient = kernel::gradient(context, cmdQueue, inputImage, sampler, height, width);
+    //cl::Buffer gradient = kernel::gradient(context, cmdQueue, inputImage, sampler, height, width);
+    cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
+
+
+
+    // Outer iterator
+    //while (width > desiredWidth || height > desiredHeight) {
+
+    // Blur image
+    kernel::blur(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
+    // Calculate gradient
+    kernel::gradient(context, cmdQueue, blurredImage, energyMatrix, sampler, height, width);
+    // Perform dynamic programming top-bottom
+    
+    // TODO: transpose and perform dynamic programming left-right
+
+    //}
 
     // Save image to disk.
-    image::save(cmdQueue, outputImage, outputFile, height, width);
+    // TODO(amidvidy): this should be saving inputImage
+    image::save(cmdQueue, blurredImage, outputFile, height, width);
 
     std::cout << "SUCCESS!" << std::endl;
 
