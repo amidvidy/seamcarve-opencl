@@ -23,25 +23,11 @@
 
 
 int main(int argc, char** argv) {
-    if (argc < 5) {
-        std::cerr << "USAGE: seamcl <INPUT> <OUTPUT> <DESIRED WIDTH> <DESIRED HEIGHT>" << std::endl;
-        exit(-1);
-    }
 
     // Parse arguments
-    std::string inputFile(argv[1]);
-    std::string outputFile(argv[2]);
-
-    std::istringstream s1(argv[3]);
-    std::istringstream s2(argv[4]);
+    std::string inputFile, outputFile;
     int desiredWidth, desiredHeight;
-    if (! (s1 >> desiredWidth)) {
-        std::cerr << "DESIRED WIDTH must be an integer." << std::endl;
-        exit(-1);
-    } else if (! (s2 >> desiredHeight)) {
-        std::cerr << "DESIRED HEIGHT must be an integer." << std::endl;
-        exit(-1);
-    }
+    setup::args(argc, argv, inputFile, outputFile, desiredWidth, desiredHeight);
 
     // Create OpenCL context
     cl::Context context = setup::context();
