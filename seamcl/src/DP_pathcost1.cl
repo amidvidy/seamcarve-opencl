@@ -23,30 +23,15 @@ __kernel void DP_path_cost(
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
 #define cM(M,X,Y) (M)[((X)*pitch+(Y))]
 // These could become inline functions or otherwise fancier!
-    
+
     const int x = get_global_id(0);     // Target x-column
-    if ((x < inset) || (x > (width - inset))) { // TODO: Confirm if off by one???
-        for (int y = 0; y < height; y++) {
-            rM(ioMatrix, x, y) = 0; // TODO: Need actual value
-        }
-    } else {
-        const int bottomInset = height - inset; // TODO: Confirm if off by one???
-        int y = 0;
-        for (; y < inset; y++) {
-            rM(ioMatrix, x, y) = 0; // TODO: Need actual value
-            barrier(CLK_GLOBAL_MEM_FENCE);
-        }
-        for (; y < (height - inset); y++) {
-            const float pathCost =  fmin( rM(ioMatrix,   x, y-1), 
+    if ((x >= inset) && (x < (width - inset))) { // TODO: Confirm if off by one???
+        for (int y = inset; y < height; y++) {
+            const float pathCost =  fmin( rM(ioMatrix,   x, y-1),
                                     fmin( rM(ioMatrix, x-1, y-1),
                                           rM(ioMatrix, x+1, y-1) ) );
             rM(ioMatrix, x, y) += pathCost;
             barrier(CLK_GLOBAL_MEM_FENCE);
         }
-        for (; y < height; y++) {
-            rM(ioMatrix, x, y) = 0; // TODO: Need actual value
-            barrier(CLK_GLOBAL_MEM_FENCE);
-        }
     }
 }
-

@@ -232,12 +232,12 @@ namespace kernel {
                                             NULL,
                                             NULL);
 
-        //if(!verify::computeSeams(deviceResult, originalEnergyMatrix, inset, width, height, pitch)) {
-        //std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
-        //            delete [] originalEnergyMatrix;
-        //            delete [] deviceResult;
-        //            exit(-1);
-        //}
+        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, inset, width, height, pitch)) {
+            std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
+            delete [] originalEnergyMatrix;
+            delete [] deviceResult;
+            exit(-1);
+        }
 
         delete [] originalEnergyMatrix;
         delete [] deviceResult;
