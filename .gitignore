@@ -12,7 +12,6 @@ seamc/diff.*
 
 *.log
 *ImageFilter2D
-*seamcl
 *.tif
 *.data
 *.old
