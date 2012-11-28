@@ -9,21 +9,30 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 
 void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G)
 {
-    int yydim = pWORK->yydim, xxdim = pWORK->xxdim;
+    int height_m1 = pWORK->height-1, width_m1 = pWORK->width-1;
     float *pY_y, *pY_yp, *pG_y;
     
-    for (int y = 5; y < yydim; y++) {
+    pG_y = G[0];
+    pY_y = Y[0];
+    for (int x = 0; x <= width_m1; x++) {
+        pY_y[x] = pG_y[x]; // Top row just gets copied
+    }
+    for (int y = 1; y <= height_m1; y++) {
+        pG_y = G[y];
         pY_y = Y[y];
         pY_yp = Y[y - 1];
-        pG_y = G[y];
-        for (int x = 5; x < xxdim; x++) {
-            pY_y[x] = pG_y[x]
-                    + fmin(fmin(pY_yp[x - 1], pY_yp[x]), pY_yp[x + 1]);
+        
+        pY_y[0] = fmin(pY_yp[0], pY_yp[1]);
+        for (int x = 1; x < width_m1; x++) {
+            float pathCost = fmin(fmin(pY_yp[x - 1], pY_yp[x]), pY_yp[x + 1]);
+            pY_y[x] = pG_y[x] + pathCost;
         }
+        pY_y[width_m1] = fmin(pY_yp[width_m1], pY_yp[width_m1-1]);
     }
 } // def dp(Y,G):
 
@@ -72,14 +81,15 @@ void SEAMC_padKernel(float **OO, int h, int w)
 
 void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
 {
-    int width = pWORK->width, yydim = pWORK->yydim;
+    int width_m1 = pWORK->width-1, height_m1 = pWORK->height-1;
     float min_v, L, C, R, *pY;
+    int idx = 0;
     
-    int idx = 5;
-    min_v = 100000000.0;
-    
-    pY = Y[yydim - 1];
-    for (int x = idx; x < (width - 5); x++) {
+    int y = height_m1;
+    int x = idx;
+    pY = Y[y];
+    min_v = pY[x];
+    while (++x <= width_m1) {
         if (pY[x] < min_v) {
             min_v = pY[x];
             idx = x;
@@ -87,26 +97,20 @@ void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
     }
     
     /* printf("idx=%d, min_v=%f\n", idx, min_v); */
-    O[yydim - 1] = idx;
-    
-    for (int y = 2; y < (yydim - 1); y++) {
-        int i = (yydim - y);
-        
-        pY = Y[i];
-        L = pY[idx - 1];
+    O[y] = idx;
+    while (--y >= 0) {
+        pY = Y[y];
+        L = (idx < 1) ? FLT_MAX : pY[idx - 1];
         C = pY[idx];
-        R = pY[idx + 1];
+        R = (idx >= width_m1) ? FLT_MAX : pY[idx + 1];
         
         if (L < C) {
             idx += (L < R) ? -1 : 1;
         } else {
             idx += (C < R) ? 0 : 1;
         }
-        
         /* printf("i=%d,idx=%d\n", i, idx); */
-        if (idx > (width - 5)) idx = (width - 5);
-        if (idx < 5) idx = 5;
-        O[i] = idx;
+        O[y] = idx;
     }
 } // def backtrack(Y,O):
 
@@ -151,8 +155,6 @@ float** SEAMC_carveGrey(float **iM, int iH, int iW, int newH, int newW)
         WORK.start_clock = clock(); // CPU usage
         WORK.ydim = WORK.height - 3;
         WORK.xdim = WORK.width - 3;
-        WORK.yydim = WORK.height - 5;
-        WORK.xxdim = WORK.width - 5;
         
         SEAMC_zeroKernel(O, newH, newW);
         SEAMC_zeroKernel(OO, newH, newW);
@@ -173,13 +175,6 @@ float** SEAMC_carveGrey(float **iM, int iH, int iW, int newH, int newW)
         SEAMC_backtrack(&WORK, OO, B);
         double secs = difftime(time(NULL ), t0);
         printf("%f sec in backtrack (c function)\n", secs);
-        
-        for (int y = WORK.yydim; y < WORK.height; y++) {
-            B[y] = B[WORK.yydim - 1];
-        }
-        for (int y = 0; y < 2; y++) {
-            B[y] = B[2];
-        }
         
         SEAMC_copyKernel(&WORK, iM, WORK.width - 1, B); // Was B[i] utilizing "i" from copyKernel's loop!
                 

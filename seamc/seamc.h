@@ -14,7 +14,7 @@ typedef struct SEAMC_WORK {
     time_t start_time, finish_time; // Epoch time
     clock_t start_clock, finish_clock; // CPU execution time (might break when using threads & GPU???)
             
-    int height, width, xdim, ydim, xxdim, yydim;
+    int height, width, xdim, ydim;
     /* Could consider having matrices here too ?? */
 } SEAMC_WORK_t, *SEAMC_WORK_p;
 
