@@ -21,7 +21,7 @@ namespace verify {
 
         for (int j = 0; j < height; ++j) {
             for (int i = 0; i < width; ++i) {
-                std::cout << rM(matrix, i, j) << "\t";
+                std::cout << rM(matrix, i, j) << " ";
             }
             std::cout << std::endl;
         }
@@ -41,28 +41,19 @@ namespace verify {
         float *hostResult = new float[pitch * height];
         memcpy(hostResult, originalEnergyMatrix, pitch * height * sizeof(float));
 
-        for (int x = 0; x < width; x++) {
-                rM(hostResult, x, 0) = rM(originalEnergyMatrix, x, 0);
-        }
         for (int y = 1; y < height; ++y) {
-            int x = 0;
-            rM(hostResult, x, y) = std::min(
-                rM(hostResult, x, y-1), rM(hostResult, x+1, y-1) );
-            while (++x < (width-1)) {
-                rM(hostResult, x, y) = rM(originalEnergyMatrix, x, y) + min3(
-                    rM(hostResult, x, y-1), 
-                    rM(hostResult, x-1, y-1), 
-                    rM(hostResult, x+1, y-1) );
+            for (int x = 0; x < width; ++x) {
+                rM(hostResult, x, y) = rM(originalEnergyMatrix, x, y) + std::min(rM(hostResult,                   x, y-1),
+                                                                        std::min(rM(hostResult,    std::max(x-1, 0), y-1),
+                                                                                 rM(hostResult, std::min(x+1,width), y-1)));
             }
-            rM(hostResult, x, y) = std::min(
-                rM(hostResult, x, y-1), rM(hostResult, x-1, y-1) );
         }
 
         std::cerr << "height\t" << height << std::endl;
         std::cerr << "width\t" << width << std::endl;
 
 
-        // print original matrix
+        //print original matrix
         //std::cout << "ENERGYMATRIX: " << std::endl;
         //printMatrix(originalEnergyMatrix, height, width, pitch);
 

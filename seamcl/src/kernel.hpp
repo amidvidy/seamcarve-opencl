@@ -167,7 +167,7 @@ namespace kernel {
                       int pitch) {
 
         // Setup kernel
-        cl::Kernel kernel = setup::kernel(ctx, std::string("DP_pathcost1.cl"), std::string("DP_path_cost"));
+        cl::Kernel kernel = setup::kernel(ctx, std::string("computeSeams.cl"), std::string("computeSeams"));
 
         cl_int errNum;
 
@@ -183,8 +183,8 @@ namespace kernel {
         }
 
         cl::NDRange offset = cl::NDRange(0);
-        cl::NDRange localWorkSize = cl::NDRange(16);
-        cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width));
+        cl::NDRange localWorkSize = cl::NDRange(256);
+        cl::NDRange globalWorkSize = cl::NDRange(256);
 
         //TODO(amidvidy): this should be configurable with a flag
 
