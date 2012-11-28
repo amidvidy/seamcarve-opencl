@@ -24,6 +24,6 @@ $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 clean:
-	rm -rf seamcl
+	rm -rf $(BUILDDIR) seamcl
 
 .PHONY: all clean fresh
