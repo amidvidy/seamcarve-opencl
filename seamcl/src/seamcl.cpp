@@ -42,11 +42,18 @@ int main(int argc, char** argv) {
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
 
+    // Intermediate buffer to hold blurred image. Currently unneeded
+    //cl::Image2D blurredImage = image::make(context, height, width);
+
     // Allocate space on device for energy matrix
     cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
 
     // Outer iterator
     //while (width > desiredWidth || height > desiredHeight) {
+
+    // Blur image, then compute gradient. We skip this currently and use the laplacian instead
+    //kernel::blur(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
+    //kernel::gradient(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
 
     // Calculate gradient (TODO!)
     kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
