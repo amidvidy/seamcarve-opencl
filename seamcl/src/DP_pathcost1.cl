@@ -12,12 +12,13 @@
 // This will give way to a better version such as trapezoidal approach, not to mention
 //   optimazation and avoidance of bad synchronization and coalescing trouble.
 
-__kernel void DP_path_cost(__global float* ioMatrix,
-                             int inset,
-                             int width,
-                             int height,
-                             int pitch) // pitch can just be width for row-major
-{
+__kernel void DP_path_cost(
+    __global float* ioMatrix, // Gradient IN and PixelCost OUT (in-place)
+    int inset,      // # of pixels at edges of image to ignore.
+    int width,      // costMatrix width (matches image width)
+    int height,     //   ...and height.
+    int pitch       // Distance to advance a pointer into matrix for each row (or col)
+) {
 // Index into matrix (either row or column major)
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
 #define cM(M,X,Y) (M)[((X)*pitch+(Y))]
