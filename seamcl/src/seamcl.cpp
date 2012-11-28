@@ -42,19 +42,14 @@ int main(int argc, char** argv) {
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
 
-    // Allocate temp space for blurred image
-    cl::Image2D blurredImage = image::make(context, height, width);
-
     // Allocate space on device for energy matrix
     cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
 
     // Outer iterator
     //while (width > desiredWidth || height > desiredHeight) {
 
-    // Blur image
-    kernel::blur(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
     // Calculate gradient (TODO!)
-    kernel::laplacian(context, cmdQueue, blurredImage, energyMatrix, sampler, height, width);
+    kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
     // Perform dynamic programming top-bottom
     kernel::computeSeams(context, cmdQueue, energyMatrix, 1, width, height, width);
     // TODO: transpose and perform dynamic programming left-right
@@ -63,7 +58,7 @@ int main(int argc, char** argv) {
 
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
-    image::save(cmdQueue, blurredImage, outputFile, height, width);
+    image::save(cmdQueue, inputImage, outputFile, height, width);
 
     std::cout << "SUCCESS!" << std::endl;
 
