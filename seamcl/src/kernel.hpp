@@ -241,7 +241,43 @@ namespace kernel {
         delete [] deviceResult;
         /** END DEBUGGING **/
     }
-    
+
+    void backtrack(cl::Context &ctx,
+                   cl::CommandQueue &cmdQueue,
+                   cl::Buffer &energyMatrix,
+                   cl::Buffer &carveArray,
+                   int width,
+                   int height,
+                   int pitch) {
+
+        // Setup
+        cl::Kernel kernel = setup::kernel(ctx, std::string("Backtrack1.cl"), std::string("Backtrack"));
+
+        cl_int errNum;
+
+        // Set kernel arguments
+        errNum = kernel.setArg(0, energyMatrix);
+        errNum |= kernel.setArg(1, carveArray);
+        errNum |= kernel.setArg(2, width);
+        errNum |= kernel.setArg(3, height);
+        errNum |= kernel.setArg(4, pitch);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting backtrack kernel arguments." << std::endl;
+        }
+
+        cl::NDRange offset = cl::NDRange(0);
+        cl::NDRange localWorkSize = cl::NDRange(1);
+        cl::NDRange globalWorkSize = cl::NDRange(256);
+
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize);
+
+
+    }
+
     /**
      * Computes the laplacian of the gaussian convolution
      *  with an image (using openCL).
