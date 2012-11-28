@@ -20,7 +20,6 @@ namespace mem {
         }
 
         return buff;
-
     }
 
 } // namespace mem {
