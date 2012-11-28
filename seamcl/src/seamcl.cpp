@@ -51,12 +51,19 @@ int main(int argc, char** argv) {
     // Outer iterator
     //while (width > desiredWidth || height > desiredHeight) {
 
-    // Blur image, then compute gradient. We skip this currently and use the laplacian instead
+
+    // NOTE: Only one object detection kernel A-C can be left uncommented:
+
+    // Kernel A: Blur image and then compute gradient.
     //kernel::blur(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
     //kernel::gradient(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
 
-    // Calculate gradient (TODO!)
+    // Kernel B: Convolve with Laplacian of Gaussian:
     kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
+
+    // Kernel C: Convolve with Optimized Laplacian of Gaussian:
+
+
     // Perform dynamic programming top-bottom
     kernel::computeSeams(context, cmdQueue, energyMatrix, 1, width, height, width);
     // TODO: transpose and perform dynamic programming left-right
