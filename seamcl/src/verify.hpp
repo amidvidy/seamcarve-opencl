@@ -41,15 +41,21 @@ namespace verify {
         float *hostResult = new float[pitch * height];
         memcpy(hostResult, originalEnergyMatrix, pitch * height * sizeof(float));
 
-        for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; x++) {
+                rM(hostResult, x, 0) = rM(originalEnergyMatrix, x, 0);
+        }
+        for (int y = 1; y < height; ++y) {
             int x = 0;
-            rM(hostResult, x, y) = FLT_MAX;
+            rM(hostResult, x, y) = std::min(
+                rM(hostResult, x, y-1), rM(hostResult, x+1, y-1) );
             while (++x < (width-1)) {
-                const float pathCost = (y < 1) ? 0.0f :
-                    min3(rM(hostResult, x, y-1), rM(hostResult, x-1, y-1), rM(hostResult, x+1, y-1));
-                rM(hostResult, x, y) = rM(originalEnergyMatrix, x, y) + pathCost;
+                rM(hostResult, x, y) = rM(originalEnergyMatrix, x, y) + min3(
+                    rM(hostResult, x, y-1), 
+                    rM(hostResult, x-1, y-1), 
+                    rM(hostResult, x+1, y-1) );
             }
-            rM(hostResult, x, y) = FLT_MAX;
+            rM(hostResult, x, y) = std::min(
+                rM(hostResult, x, y-1), rM(hostResult, x-1, y-1) );
         }
 
         std::cerr << "height\t" << height << std::endl;
