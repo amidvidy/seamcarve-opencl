@@ -62,10 +62,7 @@ int main(int argc, char** argv) {
     cl::Buffer gradient = kernel::gradient(context, cmdQueue, inputImage, sampler, height, width);
 
     // Save image to disk.
-    if (!image::save(cmdQueue, outputImage, outputFile, height, width)) {
-        std::cerr << "Error writing output image: " << outputFile << std::endl;
-        return -1;
-    }
+    image::save(cmdQueue, outputImage, outputFile, height, width);
 
     std::cout << "SUCCESS!" << std::endl;
 

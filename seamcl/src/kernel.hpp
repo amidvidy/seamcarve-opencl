@@ -154,9 +154,7 @@ namespace kernel {
             std::cerr << "ERROR_CODE = " << errNum << std::endl;
         }
 
-        if (!image::save(cmdQueue, gradientImage, std::string("gradient_output.tif"), height, width)) {
-            std::cerr << "Error writing gradient output image." << std::endl;
-        }
+        image::save(cmdQueue, gradientImage, std::string("gradient_output.tif"), height, width);
         /** END DEBUGGING */
 
         return resultMatrix;

@@ -55,7 +55,7 @@ namespace image {
      * @param width The width of the image.
      * @return Whether the operation was successful or not.
      */
-    bool save(cl::CommandQueue &cmdQueue, cl::Image2D &image, std::string fileName, int height, int width) {
+    void save(cl::CommandQueue &cmdQueue, cl::Image2D &image, std::string fileName, int height, int width) {
         cl_int errNum;
         char buffer[width * height * 4];
         cl::size_t<3> origin;
@@ -91,7 +91,11 @@ namespace image {
                                                        0xFF000000,
                                                        0x00FF0000,
                                                        0x0000FF00);
-        return (FreeImage_Save(format, bitmap, fileName.c_str()) == TRUE) ? true : false;
+
+        if (FreeImage_Save(format, bitmap, fileName.c_str()) != TRUE) {
+            std::cerr << "Error writing output image: " << fileName << std::endl;
+            exit(-1);
+        }
 
     }
 
