@@ -69,7 +69,7 @@ namespace kernel {
      * @param ctx An openCL context object.
      * @param cmdQueue An openCL command queue.
      * @param inputImage The image to blur
-     * @param resultMatrix An openCL buffer to store the output in.
+     * @param energyMatrix An openCL buffer to store the output in.
      * @param sampler An openCL image sampler object.
      * @param height The height of the input image.
      * @param width The width of the input image.
@@ -78,7 +78,7 @@ namespace kernel {
     void gradient(cl::Context &ctx,
                   cl::CommandQueue &cmdQueue,
                   cl::Image2D &inputImage,
-                  cl::Buffer &resultMatrix,
+                  cl::Buffer &energyMatrix,
                   cl::Sampler &sampler,
                   int height,
                   int width) {
@@ -91,7 +91,7 @@ namespace kernel {
 
         // Set kernel arguments
         errNum = kernel.setArg(0, inputImage);
-        errNum |= kernel.setArg(1, resultMatrix);
+        errNum |= kernel.setArg(1, energyMatrix);
         errNum |= kernel.setArg(2, sampler);
         errNum |= kernel.setArg(3, width);
         errNum |= kernel.setArg(4, height);
@@ -140,7 +140,7 @@ namespace kernel {
         region.push_back(height);
         region.push_back(1);
 
-        errNum = cmdQueue.enqueueCopyBufferToImage(resultMatrix,
+        errNum = cmdQueue.enqueueCopyBufferToImage(energyMatrix,
                                                    gradientImage,
                                                    0,
                                                    origin,
@@ -157,6 +157,48 @@ namespace kernel {
         /** END DEBUGGING */
 
     }
+
+    void computeSeams(cl::Context &ctx,
+                      cl::CommandQueue &cmdQueue,
+                      cl::Buffer &energyMatrix,
+                      int inset,
+                      int width,
+                      int height,
+                      int pitch) {
+
+        // Setup kernel
+        cl::Kernel kernel = setup::kernel(ctx, std::string("DP_pathcost1.cl"), std::string("DP_path_cost"));
+
+        cl_int errNum;
+
+        // Set kernel arguments
+        errNum = kernel.setArg(0, energyMatrix);
+        errNum |= kernel.setArg(1, inset);
+        errNum |= kernel.setArg(2, width);
+        errNum |= kernel.setArg(3, height);
+        errNum |= kernel.setArg(4, pitch);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting computeSeam kernel arguments." << std::endl;
+            exit(-1);
+        }
+
+        cl::NDRange offset = cl::NDRange(0);
+        cl::NDRange localWorkSize = cl::NDRange(16);
+        cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width));
+
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
+            exit(-1);
+        }
+    }
+
+
 
 } // namespace kernel {
 
