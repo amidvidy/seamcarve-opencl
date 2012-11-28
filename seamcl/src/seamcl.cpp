@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
     // Calculate gradient
     kernel::gradient(context, cmdQueue, blurredImage, energyMatrix, sampler, height, width);
     // Perform dynamic programming top-bottom
-    
+    kernel::computeSeams(context, cmdQueue, energyMatrix, 1, width, height, width);
     // TODO: transpose and perform dynamic programming left-right
 
     //}
