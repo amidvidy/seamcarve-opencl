@@ -193,22 +193,9 @@ namespace kernel {
 
         /** DEBUGGING */
         float *originalEnergyMatrix = new float[width * height];
-        size_t copyOffset = 0;
-        size_t size = width * height * sizeof(float);
         // read in original data
-        errNum = cmdQueue.enqueueReadBuffer(energyMatrix,
-                                            CL_TRUE,
-                                            copyOffset,
-                                            size,
-                                            (void *) originalEnergyMatrix,
-                                            NULL,
-                                            NULL);
 
-        if (errNum != CL_SUCCESS) {
-            std::cerr << "Error reading original energyMatrix" << std::endl;
-            delete [] originalEnergyMatrix;
-            exit(-1);
-        }
+        mem::read(ctx, cmdQueue, originalEnergyMatrix, energyMatrix, width * height);
 
         /** END DEBUGGING **/
 
@@ -225,13 +212,7 @@ namespace kernel {
 
         /** DEBUGGING **/
         float *deviceResult = new float[width * height];
-        errNum = cmdQueue.enqueueReadBuffer(energyMatrix,
-                                            CL_TRUE,
-                                            copyOffset,
-                                            size,
-                                            (void *) deviceResult,
-                                            NULL,
-                                            NULL);
+        mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
 
         if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch)) {
             std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
