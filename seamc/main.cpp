@@ -35,8 +35,8 @@ void process(char *image_file, int out_width, int out_height)
 
     printf("(w x h) IN: %i x %i  OUT: %i x %i\n", img_width, img_height, out_width, out_height);
     
-    // Carve it up, grey-style
-    MagickWand* mw_out = MW_Carve_Grey(magick_wand, out_height, out_width);
+    // Carve it up, grey-style (or color)
+    MagickWand* mw_out = MW_Carve(false, magick_wand, out_height, out_width);
     if (mw_out) {
         status = MagickWriteImage(mw_out, "out.jpg");
         status = MagickWriteImage(mw_out, "out.tif");
