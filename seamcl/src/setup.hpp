@@ -85,7 +85,7 @@ namespace setup {
                       << device.getInfo<CL_DEVICE_EXTENSIONS>() << std::endl;
         }
 
-        return cl::CommandQueue(ctx, devices[0]);
+        return cl::CommandQueue(ctx, devices[0], CL_QUEUE_PROFILING_ENABLE);
     }
 
     /**

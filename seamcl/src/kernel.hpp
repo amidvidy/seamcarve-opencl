@@ -17,6 +17,33 @@
 // Wrapper functions around calling kernels
 namespace kernel {
 
+    cl::Kernel blurKernel;
+    cl::Kernel gradientKernel;
+    cl::Kernel maskUnreachableKernel;
+    cl::Kernel computeSeamKernel;
+    cl::Kernel backtrackKernel;
+    cl::Kernel findMinSeamVertKernel;
+    cl::Kernel carveVertKernel;
+
+
+    void init(cl::Context &ctx) {
+        blurKernel = setup::kernel(ctx, std::string("GaussianKernel.cl"), std::string("gaussian_filter"));
+
+        gradientKernel = setup::kernel(ctx, std::string("GradientKernel2.cl"), std::string("image_gradient"));
+
+        maskUnreachableKernel = setup::kernel(ctx, std::string("maskUnreachable.cl"),
+                                              std::string("mask_unreachable"));
+
+        computeSeamKernel = setup::kernel(ctx, std::string("computeSeams.cl"), std::string("computeSeams"));
+
+        backtrackKernel = setup::kernel(ctx, std::string("Backtrack.cl"), std::string("backtrack_vert"));
+
+        findMinSeamVertKernel = setup::kernel(ctx, std::string("findMinVert.cl"),
+                                          std::string("find_min_vert"));
+
+        carveVertKernel = setup::kernel(ctx, std::string("CarveVert.cl"), std::string("carve_vert"));
+    }
+
     /**
      * Applies a gaussian blur filter to an image using openCL.
      * @param ctx An openCL context object.
@@ -35,18 +62,16 @@ namespace kernel {
               int width,
               int colsRemoved) {
 
-        // Create kernel
-        cl::Kernel kernel = setup::kernel(ctx, std::string("GaussianKernel.cl"), std::string("gaussian_filter"));
 
         // Set kernel arguments
         cl_int errNum;
 
-        errNum = kernel.setArg(0, inputImage);
-        errNum |= kernel.setArg(1, outputImage);
-        errNum |= kernel.setArg(2, sampler);
-        errNum |= kernel.setArg(3, width);
-        errNum |= kernel.setArg(4, height);
-        errNum |= kernel.setArg(5, colsRemoved);
+        errNum = blurKernel.setArg(0, inputImage);
+        errNum |= blurKernel.setArg(1, outputImage);
+        errNum |= blurKernel.setArg(2, sampler);
+        errNum |= blurKernel.setArg(3, width);
+        errNum |= blurKernel.setArg(4, height);
+        errNum |= blurKernel.setArg(5, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting kernel arguments." << std::endl;
@@ -59,7 +84,7 @@ namespace kernel {
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
         // Run kernel
-        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+        errNum = cmdQueue.enqueueNDRangeKernel(blurKernel,
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
@@ -91,18 +116,15 @@ namespace kernel {
                   int colsRemoved) {
 
 
-        // Setup kernel
-        cl::Kernel kernel = setup::kernel(ctx, std::string("GradientKernel2.cl"), std::string("image_gradient"));
-
         cl_int errNum;
 
         // Set kernel arguments
-        errNum = kernel.setArg(0, inputImage);
-        errNum |= kernel.setArg(1, energyMatrix);
-        errNum |= kernel.setArg(2, sampler);
-        errNum |= kernel.setArg(3, width);
-        errNum |= kernel.setArg(4, height);
-        errNum |= kernel.setArg(5, colsRemoved);
+        errNum = gradientKernel.setArg(0, inputImage);
+        errNum |= gradientKernel.setArg(1, energyMatrix);
+        errNum |= gradientKernel.setArg(2, sampler);
+        errNum |= gradientKernel.setArg(3, width);
+        errNum |= gradientKernel.setArg(4, height);
+        errNum |= gradientKernel.setArg(5, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting gradient kernel arguments." << std::endl;
@@ -114,7 +136,7 @@ namespace kernel {
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
 
-        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+        errNum = cmdQueue.enqueueNDRangeKernel(gradientKernel,
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
@@ -173,14 +195,12 @@ namespace kernel {
                          int height,
                          int pitch,
                          int colsRemoved) {
-        cl::Kernel kernel = setup::kernel(ctx, std::string("maskUnreachable.cl"),
-                                          std::string("mask_unreachable"));
         cl_int errNum;
-        errNum = kernel.setArg(0, energyMatrix);
-        errNum |= kernel.setArg(1, width);
-        errNum |= kernel.setArg(2, height);
-        errNum |= kernel.setArg(3, pitch);
-        errNum |= kernel.setArg(4, colsRemoved);
+        errNum = maskUnreachableKernel.setArg(0, energyMatrix);
+        errNum |= maskUnreachableKernel.setArg(1, width);
+        errNum |= maskUnreachableKernel.setArg(2, height);
+        errNum |= maskUnreachableKernel.setArg(3, pitch);
+        errNum |= maskUnreachableKernel.setArg(4, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting maskUnreachable kernel arguments." << std::endl;
@@ -190,7 +210,7 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(16, 16);
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
-        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+        errNum = cmdQueue.enqueueNDRangeKernel(maskUnreachableKernel,
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
@@ -209,17 +229,14 @@ namespace kernel {
                       int pitch,
                       int colsRemoved) {
 
-        // Setup kernel
-        cl::Kernel kernel = setup::kernel(ctx, std::string("computeSeams.cl"), std::string("computeSeams"));
-
         cl_int errNum;
 
         // Set kernel arguments
-        errNum = kernel.setArg(0, energyMatrix);
-        errNum |= kernel.setArg(1, width);
-        errNum |= kernel.setArg(2, height);
-        errNum |= kernel.setArg(3, pitch);
-        errNum |= kernel.setArg(4, colsRemoved);
+        errNum = computeSeamKernel.setArg(0, energyMatrix);
+        errNum |= computeSeamKernel.setArg(1, width);
+        errNum |= computeSeamKernel.setArg(2, height);
+        errNum |= computeSeamKernel.setArg(3, pitch);
+        errNum |= computeSeamKernel.setArg(4, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting computeSeam kernel arguments." << std::endl;
@@ -240,7 +257,7 @@ namespace kernel {
 
         // /** END DEBUGGING **/
 
-        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+        errNum = cmdQueue.enqueueNDRangeKernel(computeSeamKernel,
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
@@ -279,20 +296,20 @@ namespace kernel {
 
         // Setup
         //std::cout << "Building kernel" << std::endl;
-        cl::Kernel kernel = setup::kernel(ctx, std::string("Backtrack.cl"), std::string("backtrack_vert"));
+
 
         cl_int errNum;
 
         //std::cout << "Setting backtrack args" << std::endl;
 
         // Set kernel arguments
-        errNum = kernel.setArg(0, energyMatrix);
-        errNum |= kernel.setArg(1, vertSeamPath);
-        errNum |= kernel.setArg(2, vertMinIdx);
-        errNum |= kernel.setArg(3, width);
-        errNum |= kernel.setArg(4, height);
-        errNum |= kernel.setArg(5, pitch);
-        errNum |= kernel.setArg(6, colsRemoved);
+        errNum = backtrackKernel.setArg(0, energyMatrix);
+        errNum |= backtrackKernel.setArg(1, vertSeamPath);
+        errNum |= backtrackKernel.setArg(2, vertMinIdx);
+        errNum |= backtrackKernel.setArg(3, width);
+        errNum |= backtrackKernel.setArg(4, height);
+        errNum |= backtrackKernel.setArg(5, pitch);
+        errNum |= backtrackKernel.setArg(6, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting backtrack kernel arguments." << std::endl;
@@ -304,7 +321,7 @@ namespace kernel {
         cl::NDRange globalWorkSize = cl::NDRange(256);
 
         //std::cout << "Launching backtrack kernel" << std::endl;
-        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+        errNum = cmdQueue.enqueueNDRangeKernel(backtrackKernel,
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
@@ -334,19 +351,17 @@ namespace kernel {
                          int height,
                          int pitch,
                          int colsRemoved) {
-        // Setup Kernel
-        cl::Kernel kernel = setup::kernel(ctx, std::string("findMinVert.cl"),
-                                          std::string("find_min_vert"));
+
         cl_int errNum;
-        errNum = kernel.setArg(0, energyMatrix);
-        errNum |= kernel.setArg(1, vertMinEnergy);
-        errNum |= kernel.setArg(2, vertMinIdx);
-        errNum |= kernel.setArg(3, cl::__local(256 * sizeof(float)));
-        errNum |= kernel.setArg(4, cl::__local(256 * sizeof(float)));
-        errNum |= kernel.setArg(5, width);
-        errNum |= kernel.setArg(6, height);
-        errNum |= kernel.setArg(7, pitch);
-        errNum |= kernel.setArg(8, colsRemoved);
+        errNum = findMinSeamVertKernel.setArg(0, energyMatrix);
+        errNum |= findMinSeamVertKernel.setArg(1, vertMinEnergy);
+        errNum |= findMinSeamVertKernel.setArg(2, vertMinIdx);
+        errNum |= findMinSeamVertKernel.setArg(3, cl::__local(256 * sizeof(float)));
+        errNum |= findMinSeamVertKernel.setArg(4, cl::__local(256 * sizeof(float)));
+        errNum |= findMinSeamVertKernel.setArg(5, width);
+        errNum |= findMinSeamVertKernel.setArg(6, height);
+        errNum |= findMinSeamVertKernel.setArg(7, pitch);
+        errNum |= findMinSeamVertKernel.setArg(8, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting findMinSeamVert arguments." << std::endl;
@@ -359,7 +374,7 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(256);
         cl::NDRange globalWorkSize = cl::NDRange(256);
 
-        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+        errNum = cmdQueue.enqueueNDRangeKernel(findMinSeamVertKernel,
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
@@ -392,12 +407,13 @@ namespace kernel {
      * @return A buffer containing the gradient interpreted as a matrix of size height * width.
      */
     void laplacian(cl::Context &ctx,
-                  cl::CommandQueue &cmdQueue,
-                  cl::Image2D &inputImage,
-                  cl::Buffer &energyMatrix,
-                  cl::Sampler &sampler,
-                  int height,
-                  int width) {
+                   cl::CommandQueue &cmdQueue,
+                   cl::Image2D &inputImage,
+                   cl::Buffer &energyMatrix,
+                   cl::Sampler &sampler,
+                   int height,
+                   int width,
+                   int colsRemoved) {
 
 
         // Setup kernel
@@ -412,6 +428,7 @@ namespace kernel {
         errNum |= kernel.setArg(2, sampler);
         errNum |= kernel.setArg(3, width);
         errNum |= kernel.setArg(4, height);
+        errNum |= kernel.setArg(5, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting laplacian kernel arguments." << std::endl;
@@ -522,17 +539,17 @@ namespace kernel {
                    int width,
                    int height,
                    int numRowsCarved) {
-        cl::Kernel kernel = setup::kernel(ctx, std::string("CarveVert.cl"), std::string("carve_vert"));
+
 
         cl_int errNum;
 
-        errNum = kernel.setArg(0, inputImage);
-        errNum |= kernel.setArg(1, outputImage);
-        errNum |= kernel.setArg(2, vertSeamPath);
-        errNum |= kernel.setArg(3, sampler);
-        errNum |= kernel.setArg(4, width);
-        errNum |= kernel.setArg(5, height);
-        errNum |= kernel.setArg(6, numRowsCarved);
+        errNum = carveVertKernel.setArg(0, inputImage);
+        errNum |= carveVertKernel.setArg(1, outputImage);
+        errNum |= carveVertKernel.setArg(2, vertSeamPath);
+        errNum |= carveVertKernel.setArg(3, sampler);
+        errNum |= carveVertKernel.setArg(4, width);
+        errNum |= carveVertKernel.setArg(5, height);
+        errNum |= carveVertKernel.setArg(6, numRowsCarved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting carveVert kernel arguments." << std::endl;
@@ -544,7 +561,7 @@ namespace kernel {
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
         //std::cout << "launching CarveVert" << std::endl;
-        errNum = cmdQueue.enqueueNDRangeKernel(kernel, offset, globalWorkSize, localWorkSize);
+        errNum = cmdQueue.enqueueNDRangeKernel(carveVertKernel, offset, globalWorkSize, localWorkSize);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueueing carveVert kernel for execution." << std::endl;
             exit(-1);

@@ -59,13 +59,16 @@ int main(int argc, char** argv) {
     // Holds the indexes of of the min vertical seam
     cl::Buffer vertSeamPath = mem::buffer(context, cmdQueue, sizeof(int) * height);
 
+    // Init kernels
+    kernel::init(context);
+
     int colsToRemove = width - desiredWidth;
 
     // We are going to need to swap pointers each iteration
     cl::Image2D *curInputImage = &inputImage;
     cl::Image2D *curOutputImage = &blurredImage;
 
-    colsToRemove = 30;
+    colsToRemove = 100;
     int colsRemoved = 0;
 
     // Outer iterator, still need to figure out height
@@ -81,14 +84,15 @@ int main(int argc, char** argv) {
                      *curInputImage, *curOutputImage, sampler,
                      height, width, colsRemoved);
 
+        cmdQueue.finish();
         kernel::gradient(context, cmdQueue,
                          *curOutputImage,
                          energyMatrix, sampler,
                          height, width, colsRemoved);
 
-
+        cmdQueue.finish();
         // Kernel B: Convolve with Laplacian of Gaussian:
-        //kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
+        //kernel::laplacian(context, cmdQueue, *curInputImage, energyMatrix, sampler, height, width, colsRemoved);
 
         // Kernel C: Convolve with Optimized Laplacian of Gaussian:
 
@@ -97,24 +101,24 @@ int main(int argc, char** argv) {
         kernel::maskUnreachable(context, cmdQueue,
                                 energyMatrix,
                                 width, height, pitch, colsRemoved);
-
+        cmdQueue.finish();
         // Perform dynamic programming top-bottom
         kernel::computeSeams(context, cmdQueue,
                              energyMatrix,
                              width, height, pitch, colsRemoved);
         // TODO: transpose and perform dynamic programming left-right
-
+        cmdQueue.finish();
         // Find min vertical seam
         kernel::findMinSeamVert(context, cmdQueue,
                                 energyMatrix, vertMinEnergy, vertMinIdx,
                                 width, height, pitch, colsRemoved);
 
-
+        cmdQueue.finish();
         // Backtrack
         kernel::backtrack(context, cmdQueue,
                           energyMatrix, vertSeamPath, vertMinIdx,
                           width, height, pitch, colsRemoved);
-        cmdQueue.flush();
+        cmdQueue.finish();
         // for debugging
         //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
 
@@ -122,6 +126,7 @@ int main(int argc, char** argv) {
                           *curInputImage, *curOutputImage,
                           vertSeamPath, sampler,
                           width, height, colsRemoved + 1);
+        cmdQueue.finish();
         ++colsRemoved;
         // Swap pointers
         std::swap(curInputImage, curOutputImage);
@@ -132,9 +137,8 @@ int main(int argc, char** argv) {
 
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
-    cmdQueue.flush();
 
-    image::save(cmdQueue, blurredImage, outputFile, height, width);
+    image::save(cmdQueue, *curOutputImage, outputFile, height, width);
 
     std::cout << "SUCCESS!" << std::endl;
 

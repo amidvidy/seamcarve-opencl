@@ -2,9 +2,11 @@
 // Laplacian of Gaussian convolution of image:
 
 __kernel void gaussian_laplacian(__read_only image2d_t srcImg,
-                              __global float* resultMatrix,
-                              sampler_t sampler,
-                              int width, int height)
+                                 __global float* resultMatrix,
+                                 sampler_t sampler,
+                                 int width,
+                                 int height,
+                                 int colsRemoved)
 {
      // TODO: the coefficient weights to convert to grayscale:
      // (should be ported to CPU?)
@@ -25,7 +27,7 @@ __kernel void gaussian_laplacian(__read_only image2d_t srcImg,
     int2 tid = (int2) (get_global_id(0), get_global_id(1));
     int2 startImageCoord = tid - 4;
     int2 endImageCoord   = tid + 4;
-    if (tid.x < width && tid.y < height)
+    if (tid.x < (width-colsRemoved) && tid.y < height)
     {
         float gauss_laplacian = 0.0f;
         int weight = 0;
