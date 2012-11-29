@@ -7,12 +7,14 @@
 // STL
 #include <iostream>
 #include <algorithm>
+#include <limits>
 
 // OpencL
 #include <CL/cl.hpp>
 
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
 #define min3(A,B,C) (std::min((A),std::min((B),(C))))
+#define pROW(M,Y) (M)+((Y)*pitch)
 
 // Checks to ensure that kernels produce correct output
 namespace verify {
@@ -77,8 +79,55 @@ namespace verify {
             }
         }
         delete [] hostResult;
+        std::cout << "finished verifying computeSeams." << std::endl;
         return correct;
     }
+
+    bool backtrack(int* deviceResult,
+                   float* energyMatrix,
+                   int width,
+                   int height,
+                   int pitch) {
+        std::cerr << "in verify::backtrack" << std::endl;
+        float *hostResult = new float[height];
+
+        int y = height - 1;
+        int carveX = 1;
+
+        float *ROW = pROW(energyMatrix, y);
+        int x = carveX;
+        float min_v = ROW[x];
+        while (++x < (width-1)) {
+            if (ROW[x] < min_v) {
+                min_v = ROW[x];
+                carveX = x;
+            }
+        }
+        hostResult[y] = carveX;
+        while (y >= 0) {
+            ROW = pROW(energyMatrix, y);
+            const float L = (carveX < 1) ? std::numeric_limits<float>::max() : ROW[carveX-1];
+            const float C = ROW[carveX];
+            const float R = (carveX >= width) ? std::numeric_limits<float>::max() : ROW[carveX+1];
+            if (L < C) {
+                carveX += (L < R) ? -1 : 1;
+            } else {
+                carveX += (C < R) ? 0 : 1;
+            }
+            hostResult[y] = carveX;
+        }
+
+        //Check arrays are equal
+        for (int i = 0; i < height; ++i) {
+            if (hostResult[i] != deviceResult[i]) {
+                delete [] hostResult;
+                return false;
+            }
+        }
+        delete [] hostResult;
+        return true;
+    }
+
 
 }
 
