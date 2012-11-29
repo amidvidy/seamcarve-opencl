@@ -124,45 +124,45 @@ namespace kernel {
             exit(-1);
         }
 
-        // TODO(amidvidy): make this debugging code
-        // Read data into an image object
-        cl::Image2D gradientImage = cl::Image2D(ctx,
-                                                (cl_mem_flags) CL_MEM_READ_WRITE,
-                                                cl::ImageFormat(CL_LUMINANCE, CL_FLOAT),
-                                                width,
-                                                height,
-                                                0,
-                                                NULL,
-                                                &errNum);
-        if (errNum != CL_SUCCESS) {
-            std::cerr << "Error creating gradient output image" << std::endl;
-            exit(-1);
-        }
+        // // TODO(amidvidy): make this debugging code
+        // // Read data into an image object
+        // cl::Image2D gradientImage = cl::Image2D(ctx,
+        //                                         (cl_mem_flags) CL_MEM_READ_WRITE,
+        //                                         cl::ImageFormat(CL_LUMINANCE, CL_FLOAT),
+        //                                         width,
+        //                                         height,
+        //                                         0,
+        //                                         NULL,
+        //                                         &errNum);
+        // if (errNum != CL_SUCCESS) {
+        //     std::cerr << "Error creating gradient output image" << std::endl;
+        //     exit(-1);
+        // }
 
-        cl::size_t<3> origin;
-        origin.push_back(0);
-        origin.push_back(0);
-        origin.push_back(0);
-        cl::size_t<3> region;
-        region.push_back(width);
-        region.push_back(height);
-        region.push_back(1);
+        // cl::size_t<3> origin;
+        // origin.push_back(0);
+        // origin.push_back(0);
+        // origin.push_back(0);
+        // cl::size_t<3> region;
+        // region.push_back(width);
+        // region.push_back(height);
+        // region.push_back(1);
 
-        errNum = cmdQueue.enqueueCopyBufferToImage(energyMatrix,
-                                                   gradientImage,
-                                                   0,
-                                                   origin,
-                                                   region,
-                                                   NULL,
-                                                   NULL);
+        // errNum = cmdQueue.enqueueCopyBufferToImage(energyMatrix,
+        //                                            gradientImage,
+        //                                            0,
+        //                                            origin,
+        //                                            region,
+        //                                            NULL,
+        //                                            NULL);
 
-        if (errNum != CL_SUCCESS) {
-            std::cerr << "Error copying gradient image from buffer" << std::endl;
-            std::cerr << "ERROR_CODE = " << errNum << std::endl;
-        }
+        // if (errNum != CL_SUCCESS) {
+        //     std::cerr << "Error copying gradient image from buffer" << std::endl;
+        //     std::cerr << "ERROR_CODE = " << errNum << std::endl;
+        // }
 
-        image::save(cmdQueue, gradientImage, std::string("gradient_output.tif"), height, width);
-        /** END DEBUGGING */
+        // image::save(cmdQueue, gradientImage, std::string("gradient_output.tif"), height, width);
+        // /** END DEBUGGING */
 
     }
 
@@ -232,13 +232,13 @@ namespace kernel {
 
         //TODO(amidvidy): this should be configurable with a flag
 
-        /** DEBUGGING */
-        float *originalEnergyMatrix = new float[width * height];
-        // read in original data
+        // /** DEBUGGING */
+        // float *originalEnergyMatrix = new float[width * height];
+        // // read in original data
 
-        mem::read(ctx, cmdQueue, originalEnergyMatrix, energyMatrix, width * height);
+        // mem::read(ctx, cmdQueue, originalEnergyMatrix, energyMatrix, width * height);
 
-        /** END DEBUGGING **/
+        // /** END DEBUGGING **/
 
         errNum = cmdQueue.enqueueNDRangeKernel(kernel,
                                                offset,
@@ -247,23 +247,23 @@ namespace kernel {
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
-            delete [] originalEnergyMatrix;
+            //delete [] originalEnergyMatrix;
             exit(-1);
         }
 
-        /** DEBUGGING **/
-        float *deviceResult = new float[width * height];
-        mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
+        // /** DEBUGGING **/
+        // float *deviceResult = new float[width * height];
+        // mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
 
-        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch, colsRemoved)) {
-            std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
-            delete [] originalEnergyMatrix;
-            delete [] deviceResult;
-            exit(-1);
-        }
+        // if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch, colsRemoved)) {
+        //     std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
+        //     delete [] originalEnergyMatrix;
+        //     delete [] deviceResult;
+        //     exit(-1);
+        // }
 
-        delete [] originalEnergyMatrix;
-        delete [] deviceResult;
+        // delete [] originalEnergyMatrix;
+        // delete [] deviceResult;
         /** END DEBUGGING **/
     }
 
@@ -278,12 +278,12 @@ namespace kernel {
                    int colsRemoved) {
 
         // Setup
-        std::cout << "Building kernel" << std::endl;
+        //std::cout << "Building kernel" << std::endl;
         cl::Kernel kernel = setup::kernel(ctx, std::string("Backtrack.cl"), std::string("backtrack_vert"));
 
         cl_int errNum;
 
-        std::cout << "Setting backtrack args" << std::endl;
+        //std::cout << "Setting backtrack args" << std::endl;
 
         // Set kernel arguments
         errNum = kernel.setArg(0, energyMatrix);
@@ -303,7 +303,7 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(1);
         cl::NDRange globalWorkSize = cl::NDRange(256);
 
-        std::cout << "Launching backtrack kernel" << std::endl;
+        //std::cout << "Launching backtrack kernel" << std::endl;
         errNum = cmdQueue.enqueueNDRangeKernel(kernel,
                                                offset,
                                                globalWorkSize,
@@ -315,13 +315,13 @@ namespace kernel {
             exit(-1);
         }
 
-        /** DEBUGGING **/
-        int deviceResult[height];
+        // /** DEBUGGING **/
+        // int deviceResult[height];
 
-        mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
-        for (int i = height - 5; i < height; ++i) {
-            std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
-        }
+        // mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
+        // for (int i = height - 5; i < height; ++i) {
+        //     std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
+        // }
 
     }
 
@@ -368,15 +368,15 @@ namespace kernel {
             exit(-1);
         }
 
-        /** DEBUG **/
-        int deviceResultIdx[1];
-        float deviceResultEnergy[1];
+        // /** DEBUG **/
+        // int deviceResultIdx[1];
+        // float deviceResultEnergy[1];
 
-        mem::read(ctx, cmdQueue, deviceResultIdx, vertMinIdx);
-        mem::read(ctx, cmdQueue, deviceResultEnergy, vertMinEnergy);
+        // mem::read(ctx, cmdQueue, deviceResultIdx, vertMinIdx);
+        // mem::read(ctx, cmdQueue, deviceResultEnergy, vertMinEnergy);
 
-        std::cout << "deviceResultIdx = " << deviceResultIdx[0] << std::endl;
-        std::cout << "deviceResultEnergy = " << deviceResultEnergy[0] << std::endl;
+        // std::cout << "deviceResultIdx = " << deviceResultIdx[0] << std::endl;
+        // std::cout << "deviceResultEnergy = " << deviceResultEnergy[0] << std::endl;
     }
 
     /**
@@ -433,45 +433,45 @@ namespace kernel {
             exit(-1);
         }
 
-        // TODO(amidvidy): make this debugging code
-        // Read data into an image object
-        cl::Image2D gradientImage = cl::Image2D(ctx,
-                                                (cl_mem_flags) CL_MEM_READ_WRITE,
-                                                cl::ImageFormat(CL_INTENSITY, CL_FLOAT),
-                                                width,
-                                                height,
-                                                0,
-                                                NULL,
-                                                &errNum);
-        if (errNum != CL_SUCCESS) {
-            std::cerr << "Error creating laplacian output image" << std::endl;
-            exit(-1);
-        }
+        // // TODO(amidvidy): make this debugging code
+        // // Read data into an image object
+        // cl::Image2D gradientImage = cl::Image2D(ctx,
+        //                                         (cl_mem_flags) CL_MEM_READ_WRITE,
+        //                                         cl::ImageFormat(CL_INTENSITY, CL_FLOAT),
+        //                                         width,
+        //                                         height,
+        //                                         0,
+        //                                         NULL,
+        //                                         &errNum);
+        // if (errNum != CL_SUCCESS) {
+        //     std::cerr << "Error creating laplacian output image" << std::endl;
+        //     exit(-1);
+        // }
 
-        cl::size_t<3> origin;
-        origin.push_back(0);
-        origin.push_back(0);
-        origin.push_back(0);
-        cl::size_t<3> region;
-        region.push_back(width);
-        region.push_back(height);
-        region.push_back(1);
+        // cl::size_t<3> origin;
+        // origin.push_back(0);
+        // origin.push_back(0);
+        // origin.push_back(0);
+        // cl::size_t<3> region;
+        // region.push_back(width);
+        // region.push_back(height);
+        // region.push_back(1);
 
-        errNum = cmdQueue.enqueueCopyBufferToImage(energyMatrix,
-                                                   gradientImage,
-                                                   0,
-                                                   origin,
-                                                   region,
-                                                   NULL,
-                                                   NULL);
+        // errNum = cmdQueue.enqueueCopyBufferToImage(energyMatrix,
+        //                                            gradientImage,
+        //                                            0,
+        //                                            origin,
+        //                                            region,
+        //                                            NULL,
+        //                                            NULL);
 
-        if (errNum != CL_SUCCESS) {
-            std::cerr << "Error copying laplacian image from buffer" << std::endl;
-            std::cerr << "ERROR_CODE = " << errNum << std::endl;
-        }
+        // if (errNum != CL_SUCCESS) {
+        //     std::cerr << "Error copying laplacian image from buffer" << std::endl;
+        //     std::cerr << "ERROR_CODE = " << errNum << std::endl;
+        // }
 
-        image::save(cmdQueue, gradientImage, std::string("gradient_output.tif"), height, width);
-        /** END DEBUGGING */
+        // image::save(cmdQueue, gradientImage, std::string("gradient_output.tif"), height, width);
+        // /** END DEBUGGING */
 
     } // End of laplacian method.
 
@@ -501,7 +501,7 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(16, 16);
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
-        std::cout << "launching PaintSeam" << std::endl;
+        //std::cout << "launching PaintSeam" << std::endl;
         errNum = cmdQueue.enqueueNDRangeKernel(kernel,
                                                offset,
                                                globalWorkSize,
@@ -543,7 +543,7 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(16, 16);
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
-        std::cout << "launching CarveVert" << std::endl;
+        //std::cout << "launching CarveVert" << std::endl;
         errNum = cmdQueue.enqueueNDRangeKernel(kernel, offset, globalWorkSize, localWorkSize);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueueing carveVert kernel for execution." << std::endl;

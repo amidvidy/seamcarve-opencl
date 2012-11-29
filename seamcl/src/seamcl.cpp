@@ -65,12 +65,14 @@ int main(int argc, char** argv) {
     cl::Image2D *curInputImage = &inputImage;
     cl::Image2D *curOutputImage = &blurredImage;
 
-    colsToRemove = 350;
+    colsToRemove = 30;
     int colsRemoved = 0;
 
     // Outer iterator, still need to figure out height
     //while (width > desiredWidth || height > desiredHeight) {
     while (colsRemoved < colsToRemove) {
+
+        int64 startTime = verify::timeMillis();
 
         // NOTE: Only one object detection kernel A-C can be left uncommented:
 
@@ -123,6 +125,9 @@ int main(int argc, char** argv) {
         ++colsRemoved;
         // Swap pointers
         std::swap(curInputImage, curOutputImage);
+
+        std::cout << "Iteration:\t" << colsRemoved << std::endl;
+        std::cout << "Time(msec):\t" << verify::timeMillis() - startTime << std::endl;
     }
 
     // Save image to disk.

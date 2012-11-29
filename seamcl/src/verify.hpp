@@ -3,6 +3,9 @@
 
 // C
 #include <cmath>
+#include <sys/time.h>
+#include <ctime>
+
 
 // STL
 #include <iostream>
@@ -16,8 +19,22 @@
 #define min3(A,B,C) (std::min((A),std::min((B),(C))))
 #define pROW(M,Y) (M)+((Y)*pitch)
 
+typedef long long int64;
+typedef unsigned long long uint64;
+
 // Checks to ensure that kernels produce correct output
 namespace verify {
+
+
+
+    uint64 timeMillis() {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        uint64 ret = tv.tv_usec;
+        ret /= 1000;
+        ret += (tv.tv_sec * 1000);
+        return ret;
+    }
 
     inline void printMatrix(float *matrix, int height, int width, int pitch) {
 
