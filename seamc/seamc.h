@@ -20,11 +20,12 @@ typedef struct SEAMC_WORK {
 
 /* Core function headers for seam carving */
 
-void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G);
-void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int32_t *C);
-void SEAMC_zeroKernel(float **Y, int h, int w);
+void SEAMC_dp(float **Y, float **G, int width, int height);
+void SEAMC_backtrack(int *O, float **Y, int width, int height);
+void SEAMC_carveKernel(void **DST, void **SRC, int width, int heigth, const int32_t *CARVE, int pixBytes);
+void SEAMC_zeroKernel(void **Y, int h, int w, int pixBytes);
 void SEAMC_padKernel(float **OO, int h, int w);
 
-float** SEAMC_carveGrey(float **iM, int iH, int iW, int newH, int newW);
+void** SEAMC_carve(bool isCOLOR, void **iM, int iH, int iW, int newH, int newW);
 
 #endif // _SEAMC_H_

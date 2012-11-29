@@ -37,12 +37,13 @@ MagickWand* MW_Blank(int H, int W, char *bgndStr)
     return mw_ret;
 }
 
-MagickWand* MW_FromMatrix(float** M, int H, int W)
+MagickWand* MW_FromMatrix(bool isCOLOR, void** M, int H, int W)
 {
     MagickBooleanType mw_ok;
     ExceptionInfo ex_info, *im_ex = &ex_info;
     Image* im_out = NULL;
     MagickWand* mw_out = NULL;
+    const char *pixMap = (isCOLOR) ? "RGBA" : "I";
     
     if (!M || (H < 1) || (W < 1)) return NULL ;
     
@@ -60,7 +61,7 @@ MagickWand* MW_FromMatrix(float** M, int H, int W)
 // The for loop checks mw_ok
     for (int y = 0; (mw_ok != MagickFalse && (y < H)); y++) {
         // Push a row at a time, intensity/grayscale float
-        mw_ok = ImportImagePixels(im_out, 0, y, W, 1, "I", FloatPixel, M[y]);
+        mw_ok = ImportImagePixels(im_out, 0, y, W, 1, pixMap, FloatPixel, M[y]);
     }
     if (mw_ok == MagickFalse) {
         if (im_out) im_out = DestroyImage(im_out);
@@ -72,13 +73,15 @@ MagickWand* MW_FromMatrix(float** M, int H, int W)
     return mw_out;
 }
 
-float** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW)
+void** MW_ToMatrix(bool isCOLOR, MagickWand *mw_in, int *pH, int *pW)
 {
     MagickBooleanType mw_ok;
     ExceptionInfo ex_info, *im_ex = &ex_info;
     int h, w;
-    float** M = NULL;
-    
+    void** M = NULL;
+    const int pixDepth = (isCOLOR) ? 4 : 1;
+    const char *pixMap = (isCOLOR) ? "RGBA" : "I";
+
     if (!mw_in) return NULL ;
     
     h = MagickGetImageHeight(mw_in);
@@ -93,7 +96,7 @@ float** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW)
     if (!im_in) return NULL ;
     mw_in = NULL; //Ensure Wand not used after this point
             
-    M = np_zero_matrix_float(h, w, NULL ); // We just ignore pitch for now
+    M = (void**) np_zero_matrix_float(h, w * pixDepth, NULL ); // We just ignore pitch for now
     if (M == NULL ) return NULL ;
     
     //mw_ok = ModifyImage(&im_in, ex); // Not sure what all this does but
@@ -101,13 +104,13 @@ float** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW)
     
     for (int y = 0; ((mw_ok != MagickFalse) && (y < h)); y++) {
         // Pop a row at a time, intensity/grayscale float
-        mw_ok = ExportImagePixels(im_in, 0, y, w, 1, "I", FloatPixel, M[y], im_ex);
+            mw_ok = ExportImagePixels(im_in, 0, y, w, 1, pixMap, FloatPixel, M[y], im_ex);        
     }
     
     //if (im_in) im_in = DestroyImage(im_in); // IMPROPER if image came from a Wand
     
     if (mw_ok == MagickFalse) {
-        if (M) M = np_free_matrix_float(M);
+        if (M) M = (void**) np_free_matrix_float((float**) M);
         h = 0;
         w = 0;
     }
@@ -117,7 +120,7 @@ float** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW)
     return M;
 }
 
-MagickWand* MW_Carve_Grey(const MagickWand *mw_in, int newH, int newW)
+MagickWand* MW_Carve(bool isCOLOR, const MagickWand *mw_in, int newH, int newW)
 {
     MagickBooleanType mw_ok;
     MagickWand* mw_temp = NewMagickWand();
@@ -125,19 +128,22 @@ MagickWand* MW_Carve_Grey(const MagickWand *mw_in, int newH, int newW)
     mw_ok = MagickAddImage(mw_temp, mw_in); // Clone the input image before altering it.
     if (mw_ok == MagickFalse) return NULL ;
     
-    mw_ok = MagickSetImageType(mw_temp, GrayscaleType); // Will eliminate this, of course.
-    //mw_ok = MagickSetImageType(mw_temp, MagickGetImageType(mw_temp)); //Some advise this after loading for some reason
+    if (isCOLOR) {
+        mw_ok = MagickSetImageType(mw_temp, TrueColorType); // Hopefully this means RGBA variations.
+    } else {
+        mw_ok = MagickSetImageType(mw_temp, GrayscaleType); // Will eliminate this, of course.
+    }
     if (mw_ok == MagickFalse) return NULL ;
     
     int h, w;
-    float** M_in = MW_ToMatrix(mw_temp, &h, &w); // Zero col & row indicate ALL col & rows
+    void** M_in = MW_ToMatrix(isCOLOR, mw_temp, &h, &w); // Zero col & row indicate ALL col & rows
     mw_temp = DestroyMagickWand(mw_temp);
     
-    float** M_out = SEAMC_carveGrey(M_in, h, w, newH, newW);
-    M_in = np_free_matrix_float(M_in);
+    void** M_out = SEAMC_carve(isCOLOR, M_in, h, w, newH, newW);
+    M_in = (void**) np_free_matrix_float((float**) M_in);
     
-    mw_temp = MW_FromMatrix(M_out, newH, newW);
-    M_out = np_free_matrix_float(M_out);
+    mw_temp = MW_FromMatrix(isCOLOR, M_out, newH, newW);
+    M_out = (void**) np_free_matrix_float((float**) M_out);
     
     return mw_temp;
 }

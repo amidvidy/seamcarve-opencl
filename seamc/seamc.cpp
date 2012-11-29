@@ -4,7 +4,8 @@
  */
 
 #include "seamc.h"
-#include "energy_old.h"
+#include "energy.h"
+#include "energy_grey.h"
 #include "numcy.h"
 
 #include <stdio.h>
@@ -12,10 +13,11 @@
 #include <limits.h>
 
 
-void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G)
+void SEAMC_dp(float **Y, float **G, int width, int height)
 {
-    int height_m1 = pWORK->height-1, width_m1 = pWORK->width-1;
-    float *pY_y, *pY_yp, *pG_y;
+    int height_m1 = height-1, width_m1 = width-1;
+    const float *pG_y;
+    float *pY_y, *pY_yp;
     
     pG_y = G[0];
     pY_y = Y[0];
@@ -37,29 +39,27 @@ void SEAMC_dp(SEAMC_WORK_p pWORK, float **Y, float **G)
 } // def dp(Y,G):
 
 
-void SEAMC_copyKernel(SEAMC_WORK_p pWORK, float **I, int width_m1, int32_t *C)
+void SEAMC_carveKernel(void **DST, void **SRC, int width, int height, int32_t *CARVE, int pixBytes)
 {
-    int height = pWORK->height;
-    float *pI_y;
-    
+    const int maxRemainBytes = (width-1) * pixBytes;
+    const bool isCOPY = (DST != SRC);
     for (int y = 0; y < height; y++) {
-        pI_y = I[y];
-        for (int x = C[y]; x < width_m1; x++) {
-            pI_y[x] = pI_y[x + 1];
-        }
+        char *dROW = (char*) DST[y];
+        const char *sROW = (const char*) SRC[y];
+        ptrdiff_t CarveOffset = CARVE[y] * pixBytes;
+        ptrdiff_t RemainBytes = maxRemainBytes - CarveOffset;
+        if (isCOPY && (CarveOffset>0)) ::memmove(dROW, sROW, CarveOffset);
+        if (RemainBytes>0) ::memmove(dROW+CarveOffset, sROW+CarveOffset+pixBytes, RemainBytes);
     }
 } // def copyKernel(I,width_m1,c):
 
 
-void SEAMC_zeroKernel(float **Y, int h, int w)
+void SEAMC_zeroKernel(void **Y, int h, int w, int pixBytes)
 {
-    float *pY_y;
-    
+    int rowBytes = w * pixBytes;
     for (int y = 0; y < h; y++) {
-        pY_y = Y[y];
-        for (int x = 0; x < w; x++) {
-            pY_y[x] = 0;
-        }
+        void *pROW = Y[y];
+        ::memset(pROW, 0, rowBytes);
     }
 } // def zeroKernel(Y,h,w):
 
@@ -79,10 +79,11 @@ void SEAMC_padKernel(float **OO, int h, int w)
 } // def padKernel(OO,h,w):
 
 
-void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
+void SEAMC_backtrack(int *O, float **Y, int width, int height)
 {
-    int width_m1 = pWORK->width-1, height_m1 = pWORK->height-1;
-    float min_v, L, C, R, *pY;
+    int width_m1 = width-1, height_m1 = height-1;
+    float min_v, L, C, R;
+    const float *pY;
     int idx = 0;
     
     int y = height_m1;
@@ -118,34 +119,28 @@ void SEAMC_backtrack(SEAMC_WORK_p pWORK, float **Y, int *O)
 /*
 ** WARNING: Modifies input matrix too :)
 */
-float** SEAMC_carveGrey(float **iM, int iH, int iW, int newH, int newW)
+void** SEAMC_carve(bool isCOLOR, void **iM, int iH, int iW, int newH, int newW)
 {
 //TODO: Error handling (out of memory, etc)
 //TODO: perhaps use the output matrix as the working copy rather than modifying the input matrix.
-
-    float** newM = np_zero_matrix_float(newH, newW, NULL );
+    int pixDepth = (isCOLOR) ? 4 : 1;
+    float** KONV = NULL;
     
-    if (0) {    // Quick test of stuff!
+    void** srcIM = iM;
+    void** newM = (void**) np_zero_matrix_float(newH, newW * pixDepth, NULL );
+
+    int num_carveH = iW - newW, num_carveV = iH - newH;
+    int disableTFJ = 0; // Not referenced elsewhere?
+    if ((num_carveH == 0) && (num_carveV == 0)) {
         for (int y = 0; y < newH; y++) {
-            float *iROW = iM[iH - 1 - y], *oROW = newM[y];
-            for (int x = 0; x < newW; x++) {
-                oROW[x] = iROW[iW - 1 - x];
-            }
+            ::memmove(newM[y], iM[y], newW * sizeof(float) * pixDepth);
         }
         return newM;
     }
-    
-    float** K = np_zero_matrix_float(5, 5, NULL );
-    SEAMC_mk_kernel(K); // Could even be done once statically
-            
+
     SEAMC_WORK_t WORK; // Consistent values across multiple SEAMC calls (rather than globals)
-    
     int32_t* B = np_zero_array_int32(iH);
-    
-    int num_carveH = iW - newW, num_carveV = iH - newH;
-    int disableTFJ = 0; // Not referenced elsewhere?
-    
-    float** O = np_zero_matrix_float(iH, iW, NULL );
+    float**  O = np_zero_matrix_float(iH, iW, NULL );
     float** OO = np_zero_matrix_float(iH, iW, NULL );
     
     WORK.width = iW;
@@ -156,36 +151,42 @@ float** SEAMC_carveGrey(float **iM, int iH, int iW, int newH, int newW)
         WORK.ydim = WORK.height - 3;
         WORK.xdim = WORK.width - 3;
         
-        SEAMC_zeroKernel(O, newH, newW);
-        SEAMC_zeroKernel(OO, newH, newW);
+        SEAMC_zeroKernel((void**)  O, newH, newW, sizeof(float));
+        SEAMC_zeroKernel((void**) OO, newH, newW, sizeof(float));
         
-        SEAMC_tfj_conv2d(3, 3, WORK.ydim, WORK.xdim, iM, O, K);
-        
-        //SEAMC_padKernel(OO, WORK.height, WORK.width);
-        for (int y = 0; y < WORK.height; y++) {
-            for (int x = 0; x < 20; x++) {
-                OO[y][x] = 1000000.0;
-                OO[y][WORK.width - 1 - x] = 1000000.0;
+        if (isCOLOR) {
+            SEAMC_glaplauxian((const F4_t**) srcIM, O, WORK.width, WORK.height);
+        } else {
+            if (!KONV) {
+                KONV = np_zero_matrix_float(5, 5, NULL );
+                SEAMC_mKONV_kernel(KONV); // Could even be done once statically
+            }
+            SEAMC_tfj_conv2d(3, 3, WORK.ydim, WORK.xdim, (float**) srcIM, O, KONV);
+
+            //SEAMC_padKernel(OO, WORK.height, WORK.width);
+            for (int y = 0; y < WORK.height; y++) {
+                for (int x = 0; x < 20; x++) {
+                    OO[y][x] = 1000000.0;
+                    OO[y][WORK.width - 1 - x] = 1000000.0;
+                }
             }
         }
         
-        SEAMC_dp(&WORK, OO, O);
+        SEAMC_dp(OO, O, WORK.width, WORK.height);
         
         time_t t0 = time(NULL );
-        SEAMC_backtrack(&WORK, OO, B);
+        SEAMC_backtrack(B, OO, WORK.width, WORK.height);
         double secs = difftime(time(NULL ), t0);
         printf("%f sec in backtrack (c function)\n", secs);
         
-        SEAMC_copyKernel(&WORK, iM, WORK.width - 1, B); // Was B[i] utilizing "i" from copyKernel's loop!
-                
+        SEAMC_carveKernel(newM, srcIM, WORK.width - 1, WORK.height, B, pixDepth * sizeof(float));
+        srcIM = newM; // Copy in place from now on
+        
         WORK.width -= 1;
         double elapsed = difftime(time(NULL ), WORK.start_time);
         printf("%f sec this iteration\n", elapsed);
     }
     
-    for (int y = 0; y < WORK.height; y++) {
-        memmove(newM[y], iM[y], newW * sizeof(float));
-    }
     return newM;
 }
 
