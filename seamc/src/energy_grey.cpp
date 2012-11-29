@@ -35,10 +35,10 @@ void SEAMC_mKONV_kernel(float** K)
 } // def mk_kernel(K):
 
 /*
-** from{Row,Col} is inclusive, to{Row,Col} is non-inclusive
-*/
-void SEAMC_tfj_conv2d(int fromRow, int fromCol, int toRow, int toCol, 
-			float **I, float **O, float **K)
+ ** from{Row,Col} is inclusive, to{Row,Col} is non-inclusive
+ */
+void SEAMC_tfj_conv2d(int fromRow, int fromCol, int toRow, int toCol,
+        float **I, float **O, float **K)
 {
     float *pO_y, *pI_yyy, *pK_yy2;
     

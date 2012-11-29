@@ -37,7 +37,7 @@ MagickWand* MW_Blank(int H, int W, char *bgndStr)
     return mw_ret;
 }
 
-MagickWand* MW_FromMatrix(bool isCOLOR, void** M, int H, int W)
+MagickWand* MW_FromMatrix(void** M, int H, int W, bool isCOLOR)
 {
     MagickBooleanType mw_ok;
     ExceptionInfo ex_info, *im_ex = &ex_info;
@@ -45,17 +45,17 @@ MagickWand* MW_FromMatrix(bool isCOLOR, void** M, int H, int W)
     MagickWand* mw_out = NULL;
     const char *pixMap = (isCOLOR) ? "RGBA" : "I";
     
-    if (!M || (H < 1) || (W < 1)) return NULL ;
+    if (!M || (H < 1) || (W < 1)) return NULL;
     
     // Maybe should just make a fresh Wand and grab it's Image?  (Not sure how the backnforth works)
     ImageInfo* im_info = AcquireImageInfo();
-    if (!im_info) return NULL ;
+    if (!im_info) return NULL;
     MagickPixelPacket bkg;
     mw_ok = QueryMagickColor("white", &bkg, im_ex);
-    if (mw_ok == MagickFalse) return NULL ;
+    if (mw_ok == MagickFalse) return NULL;
     im_out = NewMagickImage(im_info, W, H, &bkg); // Can not use NULL for background, even if don't care!
     im_info = DestroyImageInfo(im_info);
-    if (!im_out) return NULL ;
+    if (!im_out) return NULL;
     
     mw_ok = ModifyImage(&im_out, im_ex); // Not sure what all this does but
 // The for loop checks mw_ok
@@ -65,7 +65,7 @@ MagickWand* MW_FromMatrix(bool isCOLOR, void** M, int H, int W)
     }
     if (mw_ok == MagickFalse) {
         if (im_out) im_out = DestroyImage(im_out);
-        return NULL ;
+        return NULL;
     }
     
     mw_out = NewMagickWandFromImage(im_out);
@@ -73,7 +73,7 @@ MagickWand* MW_FromMatrix(bool isCOLOR, void** M, int H, int W)
     return mw_out;
 }
 
-void** MW_ToMatrix(bool isCOLOR, MagickWand *mw_in, int *pH, int *pW)
+void** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW, bool isCOLOR)
 {
     MagickBooleanType mw_ok;
     ExceptionInfo ex_info, *im_ex = &ex_info;
@@ -81,30 +81,30 @@ void** MW_ToMatrix(bool isCOLOR, MagickWand *mw_in, int *pH, int *pW)
     void** M = NULL;
     const int pixDepth = (isCOLOR) ? 4 : 1;
     const char *pixMap = (isCOLOR) ? "RGBA" : "I";
-
-    if (!mw_in) return NULL ;
+    
+    if (!mw_in) return NULL;
     
     h = MagickGetImageHeight(mw_in);
     w = MagickGetImageWidth(mw_in);
-    if ((h < 1) || (w < 1)) return NULL ;
+    if ((h < 1) || (w < 1)) return NULL;
     
     // Docs seemed sparse on GetImageFrom MagickWand, however, it appears that the Image still "belongs"
     // to the Wand and we just get a reference to it (unless you Clone it I suppose).
     // If I destroy the image that was extracted from the Wand, then an Assertion fails later
     // when destroying the Wand itself.
     Image* im_in = GetImageFromMagickWand(mw_in);
-    if (!im_in) return NULL ;
+    if (!im_in) return NULL;
     mw_in = NULL; //Ensure Wand not used after this point
             
-    M = (void**) np_zero_matrix_float(h, w * pixDepth, NULL ); // We just ignore pitch for now
-    if (M == NULL ) return NULL ;
+    M = (void**) np_zero_matrix_float(h, w * pixDepth, NULL); // We just ignore pitch for now
+    if (M == NULL) return NULL;
     
     //mw_ok = ModifyImage(&im_in, ex); // Not sure what all this does but
     //mw_ok = SetGrayscaleImage(im_in); // This method doesn't seem to exist!
     
     for (int y = 0; ((mw_ok != MagickFalse) && (y < h)); y++) {
         // Pop a row at a time, intensity/grayscale float
-            mw_ok = ExportImagePixels(im_in, 0, y, w, 1, pixMap, FloatPixel, M[y], im_ex);        
+        mw_ok = ExportImagePixels(im_in, 0, y, w, 1, pixMap, FloatPixel, M[y], im_ex);
     }
     
     //if (im_in) im_in = DestroyImage(im_in); // IMPROPER if image came from a Wand
@@ -120,29 +120,30 @@ void** MW_ToMatrix(bool isCOLOR, MagickWand *mw_in, int *pH, int *pW)
     return M;
 }
 
-MagickWand* MW_Carve(bool isCOLOR, const MagickWand *mw_in, int newH, int newW)
+MagickWand* MW_Carve(const MagickWand *mw_in, int newH, int newW, bool isCOLOR, bool drawLINE)
 {
     MagickBooleanType mw_ok;
     MagickWand* mw_temp = NewMagickWand();
-    if (!mw_temp) return NULL ;
+    if (!mw_temp) return NULL;
     mw_ok = MagickAddImage(mw_temp, mw_in); // Clone the input image before altering it.
-    if (mw_ok == MagickFalse) return NULL ;
+    if (mw_ok == MagickFalse) return NULL;
     
     if (isCOLOR) {
         mw_ok = MagickSetImageType(mw_temp, TrueColorType); // Hopefully this means RGBA variations.
     } else {
         mw_ok = MagickSetImageType(mw_temp, GrayscaleType); // Will eliminate this, of course.
     }
-    if (mw_ok == MagickFalse) return NULL ;
+    if (mw_ok == MagickFalse) return NULL;
     
     int h, w;
-    void** M_in = MW_ToMatrix(isCOLOR, mw_temp, &h, &w); // Zero col & row indicate ALL col & rows
+    void** M_in = MW_ToMatrix(mw_temp, &h, &w, isCOLOR); // Zero col & row indicate ALL col & rows
     mw_temp = DestroyMagickWand(mw_temp);
     
-    void** M_out = SEAMC_carve(isCOLOR, M_in, h, w, newH, newW);
+    void** M_out = SEAMC_carve(M_in, w, h, newW, newH, isCOLOR, drawLINE);
     M_in = (void**) np_free_matrix_float((float**) M_in);
     
-    mw_temp = MW_FromMatrix(isCOLOR, M_out, newH, newW);
+    // Don't actually shrink if just drawing lines
+    mw_temp = MW_FromMatrix(M_out, (drawLINE) ? h : newH, (drawLINE) ? w:newW, isCOLOR);
     M_out = (void**) np_free_matrix_float((float**) M_out);
     
     return mw_temp;

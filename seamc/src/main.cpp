@@ -32,16 +32,16 @@ void process(char *image_file, int out_width, int out_height)
     img_width = MagickGetImageWidth(magick_wand);
     if (out_height <= 0) out_height += img_height;
     if (out_width <= 0) out_width += img_width;
-
+    
     printf("(w x h) IN: %i x %i  OUT: %i x %i\n", img_width, img_height, out_width, out_height);
     
     // Carve it up, grey-style (or color)
-    MagickWand* mw_out = MW_Carve(false, magick_wand, out_height, out_width);
+    MagickWand* mw_out = MW_Carve(magick_wand, out_height, out_width, false, true);
     if (mw_out) {
         status = MagickWriteImage(mw_out, "out.jpg");
         status = MagickWriteImage(mw_out, "out.tif");
-	status = MagickWriteImage(mw_out, "out.ppm");
-
+        status = MagickWriteImage(mw_out, "out.ppm");
+        
         if (status == MagickFalse) ThrowWandException(magick_wand);
         
         mw_out = DestroyMagickWand(mw_out);
@@ -73,8 +73,8 @@ int main(int argc, char *argv[])
         exit(-1);
     } else {
         char *image_file = argv[1];
-	int new_width = (argc > 2) ? atoi(argv[2]) : -10;
-	int new_height = (argc > 3) ? atoi(argv[3]) : 0;
+        int new_width = (argc > 2) ? atoi(argv[2]) : -10;
+        int new_height = (argc > 3) ? atoi(argv[3]) : 0;
         printf("%s %d %d\n", image_file, new_width, new_height);
         process(image_file, new_width, new_height);
     }
