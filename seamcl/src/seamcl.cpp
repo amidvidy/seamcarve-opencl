@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     cl::Sampler sampler = image::sampler(context);
 
     // Intermediate buffer to hold blurred image. Currently unneeded
-    //cl::Image2D blurredImage = image::make(context, height, width);
+    cl::Image2D blurredImage = image::make(context, height, width);
 
     // Allocate space on device for energy matrix
     cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
@@ -65,11 +65,11 @@ int main(int argc, char** argv) {
     // NOTE: Only one object detection kernel A-C can be left uncommented:
 
     // Kernel A: Blur image and then compute gradient.
-    //kernel::blur(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
-    //kernel::gradient(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
+    kernel::blur(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
+    kernel::gradient(context, cmdQueue, blurredImage, energyMatrix, sampler, height, width);
 
     // Kernel B: Convolve with Laplacian of Gaussian:
-    kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
+    //kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
 
     // Kernel C: Convolve with Optimized Laplacian of Gaussian:
 
@@ -84,10 +84,15 @@ int main(int argc, char** argv) {
 
     // Backtrack
     kernel::backtrack(context, cmdQueue, energyMatrix, vertSeamPath, vertMinIdx, width, height, pitch);
+    cmdQueue.flush();
+    // for debugging
+    //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
     //}
 
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
+    cmdQueue.flush();
+
     image::save(cmdQueue, inputImage, outputFile, height, width);
 
     std::cout << "SUCCESS!" << std::endl;
