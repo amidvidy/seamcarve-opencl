@@ -363,7 +363,7 @@ namespace kernel {
 
         /** DEBUG **/
         int deviceResultIdx = -1;
-        float deviceResultEnergy = -1.0f;
+        float deviceResultEnergy[1];
         errNum = cmdQueue.enqueueReadBuffer(vertMinIdx,
                                             CL_TRUE,
                                             0,
@@ -372,13 +372,14 @@ namespace kernel {
                                             NULL,
                                             NULL);
 
-        errNum = cmdQueue.enqueueReadBuffer(vertMinEnergy,
+        mem::read(ctx, cmdQueue, deviceResultEnergy, vertMinEnergy);
+        /**errNum = cmdQueue.enqueueReadBuffer(vertMinEnergy,
                                             CL_TRUE,
                                             0,
                                             sizeof(float),
                                             (void *) &deviceResultEnergy,
                                             NULL,
-                                            NULL);
+                                            NULL); */
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error reading deviceResultIdx and deviceResultEnergy back to host." << std::endl;
@@ -386,7 +387,7 @@ namespace kernel {
         }
 
         std::cout << "deviceResultIdx = " << deviceResultIdx << std::endl;
-        std::cout << "deviceResultEnergy = " << deviceResultEnergy << std::endl;
+        std::cout << "deviceResultEnergy = " << deviceResultEnergy[0] << std::endl;
     }
 
     /**
