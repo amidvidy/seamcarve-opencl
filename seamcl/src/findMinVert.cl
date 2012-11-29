@@ -7,7 +7,8 @@ __kernel void find_min_vert(__global float *energyMatrix,
                             __local float *reductionMemEnergy,
                             int width,
                             int height,
-                            int pitch) {
+                            int pitch,
+                            int colsRemoved) {
 // Index into matrix
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
 
@@ -19,7 +20,7 @@ __kernel void find_min_vert(__global float *energyMatrix,
     float energyMin = MAXFLOAT;
 
     // Find local min
-    for (int curIdx = localIdx; curIdx < width; curIdx+= localSize) {
+    for (int curIdx = localIdx; curIdx < (width-colsRemoved); curIdx+= localSize) {
         float curEnergy = rM(energyMatrix, curIdx, lastRowIdx);
 
         if (curEnergy < energyMin) {

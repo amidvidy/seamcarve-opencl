@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 // STL
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -58,38 +59,71 @@ int main(int argc, char** argv) {
     // Holds the indexes of of the min vertical seam
     cl::Buffer vertSeamPath = mem::buffer(context, cmdQueue, sizeof(int) * height);
 
-    // Outer iterator
+    int colsToRemove = width - desiredWidth;
+
+    // We are going to need to swap pointers each iteration
+    cl::Image2D *curInputImage = &inputImage;
+    cl::Image2D *curOutputImage = &blurredImage;
+
+    colsToRemove = 350;
+    int colsRemoved = 0;
+
+    // Outer iterator, still need to figure out height
     //while (width > desiredWidth || height > desiredHeight) {
+    while (colsRemoved < colsToRemove) {
+
+        // NOTE: Only one object detection kernel A-C can be left uncommented:
+
+        // Kernel A: Blur image and then compute gradient.
+        kernel::blur(context, cmdQueue,
+                     *curInputImage, *curOutputImage, sampler,
+                     height, width, colsRemoved);
+
+        kernel::gradient(context, cmdQueue,
+                         *curOutputImage,
+                         energyMatrix, sampler,
+                         height, width, colsRemoved);
 
 
-    // NOTE: Only one object detection kernel A-C can be left uncommented:
+        // Kernel B: Convolve with Laplacian of Gaussian:
+        //kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
 
-    // Kernel A: Blur image and then compute gradient.
-    kernel::blur(context, cmdQueue, inputImage, blurredImage, sampler, height, width);
-    kernel::gradient(context, cmdQueue, blurredImage, energyMatrix, sampler, height, width);
-
-    // Kernel B: Convolve with Laplacian of Gaussian:
-    //kernel::laplacian(context, cmdQueue, inputImage, energyMatrix, sampler, height, width);
-
-    // Kernel C: Convolve with Optimized Laplacian of Gaussian:
+        // Kernel C: Convolve with Optimized Laplacian of Gaussian:
 
 
-    // Perform dynamic programming top-bottom
-    kernel::computeSeams(context, cmdQueue, energyMatrix, width, height, pitch);
-    // TODO: transpose and perform dynamic programming left-right
+        // Mask garbage values from previous iterations as well as stencil artifacts
+        kernel::maskUnreachable(context, cmdQueue,
+                                energyMatrix,
+                                width, height, pitch, colsRemoved);
 
-    // Find min vertical seam
-    kernel::findMinSeamVert(context, cmdQueue, energyMatrix, vertMinEnergy, vertMinIdx, width, height, pitch);
+        // Perform dynamic programming top-bottom
+        kernel::computeSeams(context, cmdQueue,
+                             energyMatrix,
+                             width, height, pitch, colsRemoved);
+        // TODO: transpose and perform dynamic programming left-right
+
+        // Find min vertical seam
+        kernel::findMinSeamVert(context, cmdQueue,
+                                energyMatrix, vertMinEnergy, vertMinIdx,
+                                width, height, pitch, colsRemoved);
 
 
-    // Backtrack
-    kernel::backtrack(context, cmdQueue, energyMatrix, vertSeamPath, vertMinIdx, width, height, pitch);
-    cmdQueue.flush();
-    // for debugging
-    //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
+        // Backtrack
+        kernel::backtrack(context, cmdQueue,
+                          energyMatrix, vertSeamPath, vertMinIdx,
+                          width, height, pitch, colsRemoved);
+        cmdQueue.flush();
+        // for debugging
+        //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
 
-    kernel::carveVert(context, cmdQueue, inputImage, blurredImage, vertSeamPath, sampler, width, height, 1);
-    //}
+        kernel::carveVert(context, cmdQueue,
+                          *curInputImage, *curOutputImage,
+                          vertSeamPath, sampler,
+                          width, height, colsRemoved + 1);
+        ++colsRemoved;
+        // Swap pointers
+        std::swap(curInputImage, curOutputImage);
+    }
 
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage

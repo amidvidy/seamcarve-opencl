@@ -4,9 +4,9 @@ __kernel void image_gradient(__read_only image2d_t srcImg,
                              __global float* resultMatrix,
                              sampler_t sampler,
                              int width,
-                             int height)
+                             int height,
+                             int colsRemoved)
 {
-
 
      // Determine what portion of image to operate on:
      int2 leftPixelCoord = (int2) (get_global_id(0) - 1, get_global_id(1));
@@ -19,18 +19,14 @@ __kernel void image_gradient(__read_only image2d_t srcImg,
      // (should be ported to CPU?)
      float4 luma_coef = (float4) (0.299f, 0.587f, 0.114f, 0.0f);
 
-     if (PixelCoord.x < width && PixelCoord.y < height) {
+     if (PixelCoord.x < (width - colsRemoved) && PixelCoord.y < height) {
          // get luminescence values for pixels:
          float leftpixel = dot(luma_coef, read_imagef(srcImg, sampler, leftPixelCoord));
          float rightpixel = dot(luma_coef,read_imagef(srcImg, sampler, rightPixelCoord));
          float abovepixel = dot(luma_coef, read_imagef(srcImg, sampler, abovePixelCoord));
          float belowpixel = dot(luma_coef, read_imagef(srcImg, sampler, belowPixelCoord));
          float gradient = fabs(rightpixel - leftpixel) + fabs(abovepixel - belowpixel);
-         gradient *= 1024.0f;
-         gradient += 256;
-
 
          resultMatrix[PixelCoord.x + width * PixelCoord.y] = gradient;
     }
 }
-

@@ -32,7 +32,8 @@ namespace kernel {
               cl::Image2D &outputImage,
               cl::Sampler &sampler,
               int height,
-              int width) {
+              int width,
+              int colsRemoved) {
 
         // Create kernel
         cl::Kernel kernel = setup::kernel(ctx, std::string("GaussianKernel.cl"), std::string("gaussian_filter"));
@@ -45,6 +46,7 @@ namespace kernel {
         errNum |= kernel.setArg(2, sampler);
         errNum |= kernel.setArg(3, width);
         errNum |= kernel.setArg(4, height);
+        errNum |= kernel.setArg(5, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting kernel arguments." << std::endl;
@@ -85,11 +87,12 @@ namespace kernel {
                   cl::Buffer &energyMatrix,
                   cl::Sampler &sampler,
                   int height,
-                  int width) {
+                  int width,
+                  int colsRemoved) {
 
 
         // Setup kernel
-        cl::Kernel kernel = setup::kernel(ctx, std::string("GradientKernel.cl"), std::string("image_gradient"));
+        cl::Kernel kernel = setup::kernel(ctx, std::string("GradientKernel2.cl"), std::string("image_gradient"));
 
         cl_int errNum;
 
@@ -99,6 +102,7 @@ namespace kernel {
         errNum |= kernel.setArg(2, sampler);
         errNum |= kernel.setArg(3, width);
         errNum |= kernel.setArg(4, height);
+        errNum |= kernel.setArg(5, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting gradient kernel arguments." << std::endl;
@@ -162,12 +166,48 @@ namespace kernel {
 
     }
 
+    void maskUnreachable(cl::Context &ctx,
+                         cl::CommandQueue &cmdQueue,
+                         cl::Buffer &energyMatrix,
+                         int width,
+                         int height,
+                         int pitch,
+                         int colsRemoved) {
+        cl::Kernel kernel = setup::kernel(ctx, std::string("maskUnreachable.cl"),
+                                          std::string("mask_unreachable"));
+        cl_int errNum;
+        errNum = kernel.setArg(0, energyMatrix);
+        errNum |= kernel.setArg(1, width);
+        errNum |= kernel.setArg(2, height);
+        errNum |= kernel.setArg(3, pitch);
+        errNum |= kernel.setArg(4, colsRemoved);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting maskUnreachable kernel arguments." << std::endl;
+            exit(-1);
+        }
+        cl::NDRange offset = cl::NDRange(0);
+        cl::NDRange localWorkSize = cl::NDRange(16, 16);
+        cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
+                                                 math::roundUp(localWorkSize[1], height));
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueueing maskUnreachable kernel." << std::endl;
+            exit(-1);
+        }
+    }
+
     void computeSeams(cl::Context &ctx,
                       cl::CommandQueue &cmdQueue,
                       cl::Buffer &energyMatrix,
                       int width,
                       int height,
-                      int pitch) {
+                      int pitch,
+                      int colsRemoved) {
 
         // Setup kernel
         cl::Kernel kernel = setup::kernel(ctx, std::string("computeSeams.cl"), std::string("computeSeams"));
@@ -179,6 +219,7 @@ namespace kernel {
         errNum |= kernel.setArg(1, width);
         errNum |= kernel.setArg(2, height);
         errNum |= kernel.setArg(3, pitch);
+        errNum |= kernel.setArg(4, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting computeSeam kernel arguments." << std::endl;
@@ -214,7 +255,7 @@ namespace kernel {
         float *deviceResult = new float[width * height];
         mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
 
-        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch)) {
+        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch, colsRemoved)) {
             std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
             delete [] originalEnergyMatrix;
             delete [] deviceResult;
@@ -233,7 +274,8 @@ namespace kernel {
                    cl::Buffer &vertMinIdx,
                    int width,
                    int height,
-                   int pitch) {
+                   int pitch,
+                   int colsRemoved) {
 
         // Setup
         std::cout << "Building kernel" << std::endl;
@@ -250,6 +292,7 @@ namespace kernel {
         errNum |= kernel.setArg(3, width);
         errNum |= kernel.setArg(4, height);
         errNum |= kernel.setArg(5, pitch);
+        errNum |= kernel.setArg(6, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting backtrack kernel arguments." << std::endl;
@@ -273,12 +316,12 @@ namespace kernel {
         }
 
         /** DEBUGGING **/
-        //int deviceResult[height];
+        int deviceResult[height];
 
-        //mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
-        //for (int i = 0; i < height; ++i) {
-        //std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
-        //}
+        mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
+        for (int i = height - 5; i < height; ++i) {
+            std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
+        }
 
     }
 
@@ -289,7 +332,8 @@ namespace kernel {
                          cl::Buffer &vertMinIdx,
                          int width,
                          int height,
-                         int pitch) {
+                         int pitch,
+                         int colsRemoved) {
         // Setup Kernel
         cl::Kernel kernel = setup::kernel(ctx, std::string("findMinVert.cl"),
                                           std::string("find_min_vert"));
@@ -302,6 +346,7 @@ namespace kernel {
         errNum |= kernel.setArg(5, width);
         errNum |= kernel.setArg(6, height);
         errNum |= kernel.setArg(7, pitch);
+        errNum |= kernel.setArg(8, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting findMinSeamVert arguments." << std::endl;

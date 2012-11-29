@@ -3,7 +3,8 @@ __kernel void backtrack_vert(__global float *energyMatrix,
                              __global int *startMinIdx,
                              int width,
                              int height,
-                             int pitch) {
+                             int pitch,
+                             int colsRemoved) {
 // Index into matrix
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
 
@@ -21,7 +22,7 @@ __kernel void backtrack_vert(__global float *energyMatrix,
 
             float left = (curIdx < 0) ? MAXFLOAT : rM(energyMatrix, curIdx - 1, y);
             float center = rM(energyMatrix, curIdx, y);
-            float right = (curIdx > width) ? MAXFLOAT : rM(energyMatrix, curIdx + 1, y);
+            float right = (curIdx > (width-colsRemoved)) ? MAXFLOAT : rM(energyMatrix, curIdx + 1, y);
 
             if (left < center) {
                 curIdx += (left < right) ? -1 : 1;

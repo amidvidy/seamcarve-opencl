@@ -4,7 +4,9 @@
 __kernel void gaussian_filter(__read_only image2d_t srcImg,
                               __write_only image2d_t dstImg,
                               sampler_t sampler,
-                              int width, int height)
+                              int width,
+                              int height,
+                              int colsRemoved)
 {
     // Gaussian Kernel is:
     // 1  2  1
@@ -18,7 +20,7 @@ __kernel void gaussian_filter(__read_only image2d_t srcImg,
     int2 endImageCoord   = (int2) (get_global_id(0) + 1, get_global_id(1) + 1);
     int2 outImageCoord = (int2) (get_global_id(0), get_global_id(1));
 
-    if (outImageCoord.x < width && outImageCoord.y < height)
+    if (outImageCoord.x < (width - colsRemoved) && outImageCoord.y < height)
     {
         int weight = 0;
         float4 outColor = (float4)(0.0f, 0.0f, 0.0f, 0.0f);
