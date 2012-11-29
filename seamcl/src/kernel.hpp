@@ -248,14 +248,15 @@ namespace kernel {
     void backtrack(cl::Context &ctx,
                    cl::CommandQueue &cmdQueue,
                    cl::Buffer &energyMatrix,
-                   cl::Buffer &carveArray,
+                   cl::Buffer &vertSeamPath,
+                   cl::Buffer &vertMinIdx,
                    int width,
                    int height,
                    int pitch) {
 
         // Setup
         std::cout << "Building kernel" << std::endl;
-        cl::Kernel kernel = setup::kernel(ctx, std::string("Backtrack1.cl"), std::string("Backtrack"));
+        cl::Kernel kernel = setup::kernel(ctx, std::string("Backtrack.cl"), std::string("backtrack_vert"));
 
         cl_int errNum;
 
@@ -263,10 +264,11 @@ namespace kernel {
 
         // Set kernel arguments
         errNum = kernel.setArg(0, energyMatrix);
-        errNum |= kernel.setArg(1, carveArray);
-        errNum |= kernel.setArg(2, width);
-        errNum |= kernel.setArg(3, height);
-        errNum |= kernel.setArg(4, pitch);
+        errNum |= kernel.setArg(1, vertSeamPath);
+        errNum |= kernel.setArg(2, vertMinIdx);
+        errNum |= kernel.setArg(3, width);
+        errNum |= kernel.setArg(4, height);
+        errNum |= kernel.setArg(5, pitch);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting backtrack kernel arguments." << std::endl;
@@ -290,33 +292,12 @@ namespace kernel {
         }
 
         /** DEBUGGING **/
-        int *deviceResult = new int[height];
-        errNum = cmdQueue.enqueueReadBuffer(carveArray,
-                                            CL_TRUE,
-                                            0,
-                                            height * sizeof(int),
-                                            (void *) deviceResult,
-                                            NULL,
-                                            NULL);
+        int deviceResult[height];
 
-        float *energyMatrixCopy = new float[height * width];
-        errNum = cmdQueue.enqueueReadBuffer(energyMatrix,
-                                            CL_TRUE,
-                                            0,
-                                            height * width * sizeof(float),
-                                            (void *) energyMatrixCopy,
-                                            NULL,
-                                            NULL);
-
-        if (!verify::backtrack(deviceResult, energyMatrixCopy, width, height, width)) {
-            std::cerr << "Incorrect results from kernel::backtrack" << std::endl;
-            delete [] energyMatrixCopy;
-            delete [] deviceResult;
-            exit(-1);
+        mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
+        for (int i = 0; i < height; ++i) {
+            std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
         }
-
-        delete [] energyMatrixCopy;
-        delete [] deviceResult;
 
     }
 
@@ -325,8 +306,8 @@ namespace kernel {
                          cl::Buffer &energyMatrix,
                          cl::Buffer &vertMinEnergy,
                          cl::Buffer &vertMinIdx,
-                         int height,
                          int width,
+                         int height,
                          int pitch) {
         // Setup Kernel
         cl::Kernel kernel = setup::kernel(ctx, std::string("findMinVert.cl"),
@@ -362,31 +343,13 @@ namespace kernel {
         }
 
         /** DEBUG **/
-        int deviceResultIdx = -1;
+        int deviceResultIdx[1];
         float deviceResultEnergy[1];
-        errNum = cmdQueue.enqueueReadBuffer(vertMinIdx,
-                                            CL_TRUE,
-                                            0,
-                                            sizeof(int),
-                                            (void *) &deviceResultIdx,
-                                            NULL,
-                                            NULL);
 
+        mem::read(ctx, cmdQueue, deviceResultIdx, vertMinIdx);
         mem::read(ctx, cmdQueue, deviceResultEnergy, vertMinEnergy);
-        /**errNum = cmdQueue.enqueueReadBuffer(vertMinEnergy,
-                                            CL_TRUE,
-                                            0,
-                                            sizeof(float),
-                                            (void *) &deviceResultEnergy,
-                                            NULL,
-                                            NULL); */
 
-        if (errNum != CL_SUCCESS) {
-            std::cerr << "Error reading deviceResultIdx and deviceResultEnergy back to host." << std::endl;
-            exit(-1);
-        }
-
-        std::cout << "deviceResultIdx = " << deviceResultIdx << std::endl;
+        std::cout << "deviceResultIdx = " << deviceResultIdx[0] << std::endl;
         std::cout << "deviceResultEnergy = " << deviceResultEnergy[0] << std::endl;
     }
 

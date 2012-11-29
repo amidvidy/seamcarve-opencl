@@ -33,12 +33,12 @@ __kernel void gaussian_laplacian(__read_only image2d_t srcImg,
         {
             for( int x = startImageCoord.x; x <= endImageCoord.x; x++)
             {
-	      gauss_laplacian += (dot(luma_coef, read_imagef(srcImg, sampler, (int2)(x, y))) * (kernelWeights[weight] * 1024.0f ));
+	      gauss_laplacian += (dot(luma_coef, read_imagef(srcImg, sampler, (int2)(x, y))) * (kernelWeights[weight]));
                 weight += 1;
             }
         }
 
         // Write the output value to the result Matrix:
-	resultMatrix[tid.x + width*tid.y] = gauss_laplacian + 14096.0f;
+        resultMatrix[tid.x + width*tid.y] = gauss_laplacian;
     }
 }

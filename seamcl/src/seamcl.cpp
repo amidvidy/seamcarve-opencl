@@ -39,6 +39,9 @@ int main(int argc, char** argv) {
     int width, height;
     cl::Image2D inputImage = image::load(context, std::string(argv[1]), height, width);
 
+    // just in case we end up using padding
+    int pitch = width;
+
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
 
@@ -50,7 +53,10 @@ int main(int argc, char** argv) {
 
     // Holds the current energy of the min vertical seam
     cl::Buffer vertMinEnergy = mem::buffer(context, cmdQueue, sizeof(float));
+    // Holds the starting index of the min vertical seam
     cl::Buffer vertMinIdx = mem::buffer(context, cmdQueue, sizeof(int));
+    // Holds the indexes of of the min vertical seam
+    cl::Buffer vertSeamPath = mem::buffer(context, cmdQueue, sizeof(int) * height);
 
     // Outer iterator
     //while (width > desiredWidth || height > desiredHeight) {
@@ -69,12 +75,15 @@ int main(int argc, char** argv) {
 
 
     // Perform dynamic programming top-bottom
-    kernel::computeSeams(context, cmdQueue, energyMatrix, width, height, width);
+    kernel::computeSeams(context, cmdQueue, energyMatrix, width, height, pitch);
     // TODO: transpose and perform dynamic programming left-right
 
     // Find min vertical seam
-    kernel::findMinSeamVert(context, cmdQueue, energyMatrix, vertMinEnergy, vertMinIdx, height, width, width);
+    kernel::findMinSeamVert(context, cmdQueue, energyMatrix, vertMinEnergy, vertMinIdx, width, height, pitch);
 
+
+    // Backtrack
+    kernel::backtrack(context, cmdQueue, energyMatrix, vertSeamPath, vertMinIdx, width, height, pitch);
     //}
 
     // Save image to disk.

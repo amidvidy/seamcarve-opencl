@@ -1,4 +1,4 @@
-__kernel void backtrace_vert(__global float *energyMatrix,
+__kernel void backtrack_vert(__global float *energyMatrix,
                              __global int *vertSeamPath,
                              __global int *startMinIdx,
                              int width,
@@ -11,7 +11,6 @@ __kernel void backtrace_vert(__global float *energyMatrix,
     const int startRowIdx = height - 2;
 
     int curIdx = *startMinIdx;
-    float energyMin;
 
     if (localIdx == 0) {
         // We know the first value already
@@ -22,12 +21,12 @@ __kernel void backtrace_vert(__global float *energyMatrix,
 
             float left = (curIdx < 0) ? MAXFLOAT : rM(energyMatrix, curIdx - 1, y);
             float center = rM(energyMatrix, curIdx, y);
-            float right (curIdx > width) ? MAXFLOAT : rM(energyMatrix, curIdx + 1, y);
+            float right = (curIdx > width) ? MAXFLOAT : rM(energyMatrix, curIdx + 1, y);
 
             if (left < center) {
-                curIdx += (left < right) -1 : 1;
+                curIdx += (left < right) ? -1 : 1;
             } else {
-                curIdx += (center < right) 0 : 1;
+                curIdx += (center < right) ? 0 : 1;
             }
 
             vertSeamPath[y] = curIdx;
