@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-static const bool DBG_DUMPIMG = true;
-static const bool DBG_DUMPTXT = true;
+static const bool DBG_DUMPIMG = false;
+static const bool DBG_DUMPTXT = false;
 
 struct I2_t {
     int x, y;
