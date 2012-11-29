@@ -1,6 +1,10 @@
 #include "numcy.h"
 
+#include "magic.h"
+
 #include <stdlib.h>
+#include <stdio.h>
+
 
 /* Note that calloc zeros the memory for us.  That's what it's used for here */
 
@@ -67,5 +71,27 @@ float* np_free_array_float(float* A)
 float** np_free_matrix_float(float** M)
 {
     return (float**) np_free_matrix_int32((int32_t**) M);
+}
+
+void DebugMatrix(void **IMG, int W, int H, const char* name, int remainWidth, bool isCOLOR) {
+    if (DBG_DUMPTXT) {
+        fprintf(stderr, "IMG %s (%d x %d) %s\n", name, W, H, (isCOLOR) ? "RGBA" : "LUM");
+        for(int y=0; y<H; y++) {
+            const void *pROW = IMG[y];
+            fprintf(stderr, "ROW %d:", y);
+            for (int x=0; x<W; x++) {
+                if (isCOLOR) {
+                    F4_t tF4 = ((F4_t*) pROW)[x];
+                    fprintf(stderr, " (%8.3f,%8.3f,%8.3f,%8.3f)", tF4.x, tF4.y, tF4.z, tF4.w);
+                } else {
+                    float tF = ((float*) pROW)[x];
+                    fprintf(stderr, " %8.3f",  tF);
+                }
+            }
+            fprintf(stderr, "\n");
+        }
+        fprintf(stderr, "\n");
+    }
+    if (DBG_DUMPIMG) MW_DumpMatrix(IMG, H, W, name, isCOLOR);
 }
 
