@@ -461,12 +461,49 @@ namespace kernel {
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
-        cmdQueue.flush();
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing paintSeam kernel for execution." << std::endl;
             exit(-1);
         }
 
+    }
+
+    void carveVert(cl::Context &ctx,
+                   cl::CommandQueue &cmdQueue,
+                   cl::Image2D &inputImage,
+                   cl::Image2D &outputImage,
+                   cl::Buffer &vertSeamPath,
+                   cl::Sampler &sampler,
+                   int width,
+                   int height,
+                   int numRowsCarved) {
+        cl::Kernel kernel = setup::kernel(ctx, std::string("CarveVert.cl"), std::string("carve_vert"));
+
+        cl_int errNum;
+
+        errNum = kernel.setArg(0, inputImage);
+        errNum |= kernel.setArg(1, outputImage);
+        errNum |= kernel.setArg(2, vertSeamPath);
+        errNum |= kernel.setArg(3, sampler);
+        errNum |= kernel.setArg(4, width);
+        errNum |= kernel.setArg(5, height);
+        errNum |= kernel.setArg(6, numRowsCarved);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting carveVert kernel arguments." << std::endl;
+            exit(-1);
+        }
+
+        cl::NDRange offset = cl::NDRange(0, 0);
+        cl::NDRange localWorkSize = cl::NDRange(16, 16);
+        cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
+                                                 math::roundUp(localWorkSize[1], height));
+        std::cout << "launching CarveVert" << std::endl;
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel, offset, globalWorkSize, localWorkSize);
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueueing carveVert kernel for execution." << std::endl;
+            exit(-1);
+        }
     }
 
 } // namespace kernel {
