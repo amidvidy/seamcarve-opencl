@@ -22,6 +22,7 @@ namespace mem {
         return buff;
     }
 
+    // This only works for stack allocated arrays.
     template<typename T, std::size_t sz>
     void read(cl::Context &ctx, cl::CommandQueue &cmdQueue, T(&arr)[sz], cl::Buffer &buff) {
         cl_int errNum = cmdQueue.enqueueReadBuffer(buff,
