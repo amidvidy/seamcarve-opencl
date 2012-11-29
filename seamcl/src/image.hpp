@@ -30,7 +30,7 @@ namespace image {
         cl::ImageFormat imageFormat = cl::ImageFormat(CL_RGBA, CL_UNORM_INT8);
 
         cl::Image2D img =  cl::Image2D(ctx,
-                                       (cl_mem_flags) CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                       (cl_mem_flags) CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
                                        imageFormat,
                                        width,
                                        height,
