@@ -48,8 +48,9 @@ int main(int argc, char** argv) {
     // Allocate space on device for energy matrix
     cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
 
-    // Allocate space on device to store a seam
-    cl::Buffer verticalSeamIdx = mem::buffer(context, cmdQueue, height * sizeof(int));
+    // Holds the current energy of the min vertical seam
+    cl::Buffer vertMinEnergy = mem::buffer(context, cmdQueue, sizeof(float));
+    cl::Buffer vertMinIdx = mem::buffer(context, cmdQueue, sizeof(int));
 
     // Outer iterator
     //while (width > desiredWidth || height > desiredHeight) {
@@ -70,9 +71,10 @@ int main(int argc, char** argv) {
     // Perform dynamic programming top-bottom
     kernel::computeSeams(context, cmdQueue, energyMatrix, width, height, width);
     // TODO: transpose and perform dynamic programming left-right
-    std::cout << "Finished computing seams, about to start backtracking" << std::endl;
-    // Backtrack
-    //kernel::backtrack(context, cmdQueue, energyMatrix, verticalSeamIdx, width, height, width);
+
+    // Find min vertical seam
+    kernel::findMinSeamVert(context, cmdQueue, energyMatrix, vertMinEnergy, vertMinIdx, height, width, width);
+
     //}
 
     // Save image to disk.

@@ -326,7 +326,8 @@ namespace kernel {
                          cl::Buffer &vertMinEnergy,
                          cl::Buffer &vertMinIdx,
                          int height,
-                         int width) {
+                         int width,
+                         int pitch) {
         // Setup Kernel
         cl::Kernel kernel = setup::kernel(ctx, std::string("findMinVert.cl"),
                                           std::string("find_min_vert"));
@@ -338,6 +339,7 @@ namespace kernel {
         errNum |= kernel.setArg(4, cl::__local(256 * sizeof(float)));
         errNum |= kernel.setArg(5, width);
         errNum |= kernel.setArg(6, height);
+        errNum |= kernel.setArg(7, pitch);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting findMinSeamVert arguments." << std::endl;
@@ -359,7 +361,32 @@ namespace kernel {
             exit(-1);
         }
 
+        /** DEBUG **/
+        int deviceResultIdx = -1;
+        float deviceResultEnergy = -1.0f;
+        errNum = cmdQueue.enqueueReadBuffer(vertMinIdx,
+                                            CL_TRUE,
+                                            0,
+                                            sizeof(int),
+                                            (void *) &deviceResultIdx,
+                                            NULL,
+                                            NULL);
 
+        errNum = cmdQueue.enqueueReadBuffer(vertMinEnergy,
+                                            CL_TRUE,
+                                            0,
+                                            sizeof(float),
+                                            (void *) &deviceResultEnergy,
+                                            NULL,
+                                            NULL);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error reading deviceResultIdx and deviceResultEnergy back to host." << std::endl;
+            exit(-1);
+        }
+
+        std::cout << "deviceResultIdx = " << deviceResultIdx << std::endl;
+        std::cout << "deviceResultEnergy = " << deviceResultEnergy << std::endl;
     }
 
     /**

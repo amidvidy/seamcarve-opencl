@@ -1,25 +1,26 @@
 // This only works with one workgroup! If this is the slowest part, we can separate out the reduction
 // later.
 __kernel void find_min_vert(__global float *energyMatrix,
-                              __global float *outMin
-                              __global int *outMinIdx,
-                              __local float *reductionMemIdx,
-                              __local float *reductionMemEnergy,
-                              int width,
-                              int height) {
+                            __global float *outMin,
+                            __global int *outMinIdx,
+                            __local float *reductionMemIdx,
+                            __local float *reductionMemEnergy,
+                            int width,
+                            int height,
+                            int pitch) {
 // Index into matrix
 #define rM(M,X,Y) (M)[((Y)*pitch+(X))]
 
     const int localIdx = get_local_id(0);
     const int localSize = get_local_size(0);
 
-    const intLastRowIdx = height - 1;
+    const int lastRowIdx = height - 1;
     int energyMinIdx = 0;
     float energyMin = MAXFLOAT;
 
     // Find local min
     for (int curIdx = localIdx; curIdx < width; curIdx+= localSize) {
-        float curEnergy = rM(M, curIdx, intLastRowIdx);
+        float curEnergy = rM(energyMatrix, curIdx, lastRowIdx);
 
         if (curEnergy < energyMin) {
             energyMin = curEnergy;
@@ -39,7 +40,7 @@ __kernel void find_min_vert(__global float *energyMatrix,
             float reduceEnergy = reductionMemEnergy[localIdx + reductionIdx];
             if (reduceEnergy < myEnergy) {
                 reductionMemEnergy[localIdx] = reduceEnergy;
-                reductionMemIdx[localIdx] = reductionMemIdx[localIDx + reductionIdx];
+                reductionMemIdx[localIdx] = reductionMemIdx[localIdx + reductionIdx];
             }
         }
     }
@@ -50,4 +51,3 @@ __kernel void find_min_vert(__global float *energyMatrix,
     }
 
 }
-

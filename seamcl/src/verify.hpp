@@ -56,14 +56,14 @@ namespace verify {
 
 
         //print original matrix
-        //std::cout << "ENERGYMATRIX: " << std::endl;
-        //printMatrix(originalEnergyMatrix, height, width, pitch);
+        // std::cout << "ENERGYMATRIX: " << std::endl;
+        // printMatrix(originalEnergyMatrix, height, width, pitch);
 
-        //std::cout << "DEVICERESULT: " << std::endl;
-        //printMatrix(deviceResult, height, width, pitch);
+        // std::cout << "DEVICERESULT: " << std::endl;
+        // printMatrix(deviceResult, height, width, pitch);
 
-        //std::cout << "HOSTRESULT: " << std::endl;
-        //printMatrix(hostResult, height, width, pitch);
+        // std::cout << "HOSTRESULT: " << std::endl;
+        // printMatrix(hostResult, height, width, pitch);
 
         bool correct = true;
 
