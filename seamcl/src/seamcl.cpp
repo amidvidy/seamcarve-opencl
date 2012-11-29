@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     // Make sampler
     cl::Sampler sampler = image::sampler(context);
 
-    // Intermediate buffer to hold blurred image. Currently unneeded
+    // Intermediate buffer to hold blurred image.
     cl::Image2D blurredImage = image::make(context, height, width);
 
     // Allocate space on device for energy matrix
@@ -87,13 +87,15 @@ int main(int argc, char** argv) {
     cmdQueue.flush();
     // for debugging
     //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
+
+    kernel::carveVert(context, cmdQueue, inputImage, blurredImage, vertSeamPath, sampler, width, height, 1);
     //}
 
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
     cmdQueue.flush();
 
-    image::save(cmdQueue, inputImage, outputFile, height, width);
+    image::save(cmdQueue, blurredImage, outputFile, height, width);
 
     std::cout << "SUCCESS!" << std::endl;
 
