@@ -15,8 +15,8 @@
     }
 
 void process(const char *in_file, const char *out_file, //
-            int out_width, int out_height, //
-            bool isCOLOR = true, bool drawLINE = false)
+        int out_width, int out_height, //
+        bool isCOLOR = true, bool drawLINE = false)
 {
     MagickWand *magick_wand = NULL;
     MagickBooleanType status;
@@ -46,7 +46,7 @@ void process(const char *in_file, const char *out_file, //
             status = MagickWriteImage(mw_out, "out.tif");
             status = MagickWriteImage(mw_out, "out.ppm");
         }
-
+        
         if (status == MagickFalse) ThrowWandException(magick_wand);
         
         mw_out = DestroyMagickWand(mw_out);
@@ -80,14 +80,14 @@ int main(int argc, char *argv[])
     } else {
         bool isCOLOR = (strcmp(argv[0], "seamc_grey") != 0) && (strcmp(argv[0], "linec_grey") != 0);
         bool drawLINE = (strcmp(argv[0], "linec_grey") == 0) || (strcmp(argv[0], "linec") == 0);
-
+        
         char inFile[1024], outFile[1024];
         strncpy(inFile, (argc > 1) ? argv[1] : "in.tif", 1024); // This case doesn't happen.
         strncpy(outFile, (argc > 2) ? argv[2] : "out.tif", 1024);
-        int new_width = (argc > 3) ? atoi(argv[2]) : -10;
-        int new_height = (argc > 4) ? atoi(argv[3]) : 0;
+        int new_width = (argc > 3) ? atoi(argv[3]) : -10;
+        int new_height = (argc > 4) ? atoi(argv[4]) : 0;
         printf("%s -> %s (%d x %d)\n", inFile, outFile, new_width, new_height);
-
+        
         process(inFile, outFile, new_width, new_height, isCOLOR, drawLINE);
     }
 }

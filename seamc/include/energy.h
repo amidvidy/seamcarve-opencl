@@ -20,4 +20,3 @@ void SEAMC_gradient( //
         const int width, const int height);
 
 #endif // _ENERGY_H_
-

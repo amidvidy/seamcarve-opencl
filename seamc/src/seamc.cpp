@@ -114,7 +114,6 @@ void SEAMC_backtrack(int *O, float **Y, int width, int height)
     }
 } // def backtrack(Y,O):
 
-
 void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR, bool drawLINE)
 {
 //TODO: Error handling (out of memory, etc)
@@ -123,7 +122,7 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
     float** KONV = NULL;
     
     const int fullWidth = max(inW, newW), fullHeight = max(inH, newH);
-
+    
     void** srcIM = iM;
     void** newM = (void**) np_zero_matrix_float(fullHeight, fullWidth * pixDepth, NULL);
     
@@ -141,7 +140,7 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
     float** GRAD = np_zero_matrix_float(inH, inW, NULL);
     float** COST = np_zero_matrix_float(inH, inW, NULL);
     F4_t** blurM = (F4_t**) np_zero_matrix_float(fullHeight, fullWidth * pixDepth, NULL);
-
+    
     WORK.width = inW;
     WORK.height = inH;
     int remainWidth = inW, remainHeight = inH; // These count down even if we're drawing lines rather than carving
@@ -159,9 +158,9 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
             //SEAMC_glaplauxian(O, (const F4_t**) srcIM, WORK.width, WORK.height);
             SEAMC_gaussian(blurM, (const F4_t**) srcIM, WORK.width, WORK.height);
             DebugMatrix((void**) blurM, WORK.width, WORK.height, "1_blur", remainWidth, true);
-
+            
             SEAMC_gradient(GRAD, const_cast<const F4_t**>(blurM), WORK.width, WORK.height);
-         } else {
+        } else {
             if (!KONV) {
                 KONV = np_zero_matrix_float(5, 5, NULL);
                 SEAMC_mKONV_kernel(KONV); // Could even be done once statically
@@ -179,11 +178,11 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
         
         SEAMC_dp(COST, GRAD, WORK.width, WORK.height);
         DebugMatrix((void**) COST, WORK.width, WORK.height, "3_cost", remainWidth, false);
-
+        
         SEAMC_backtrack(CARVE, COST, WORK.width, WORK.height);
         if (DBG_DUMPTXT) {
             fprintf(stdout, "CARV %d: ", WORK.width);
-            for (int cy= 0; cy<WORK.height; cy++) {
+            for (int cy = 0; cy < WORK.height; cy++) {
                 fprintf(stdout, "%d ", CARVE[cy]);
             }
             fprintf(stdout, "\n\n");
@@ -199,17 +198,17 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
                 
         double elapsed = difftime(time(NULL), WORK.start_time);
         fprintf(stderr, "%f sec this iteration (%d)\n", elapsed, remainWidth);
-
+        
         if (!drawLINE) WORK.width--;
         remainWidth--;
     }
-
+    
     // Clean up temporaries
     CARVE = np_free_array_int32(CARVE);
     GRAD = np_free_matrix_float(GRAD);
     COST = np_free_matrix_float(COST);
     KONV = np_free_matrix_float(KONV);
-
+    
     return newM;
 }
 

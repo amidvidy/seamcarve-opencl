@@ -26,6 +26,7 @@ void SEAMC_carveKernel(void **DST, void **SRC, int width, int height, int32_t *C
 void SEAMC_lineKernel(void **DST, void **SRC, int width, int height, int32_t *CARVE, int pixBytes);
 void SEAMC_zeroKernel(void **Y, short width, int height, int pixBytes);
 
-void** SEAMC_carve(void **iM, int iW, int iH, int newW, int newH, bool isCOLOR = true, bool drawLINE = false);
+void** SEAMC_carve(void **iM, int iW, int iH, int newW, int newH, bool isCOLOR = true,
+        bool drawLINE = false);
 
 #endif // _SEAMC_H_

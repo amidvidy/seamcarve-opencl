@@ -19,9 +19,9 @@ void SEAMC_glaplauxian( //
         const int width, const int height)
 {
     static const float X = 1024.0f;
-    static const F4_t luma_coef(//
+    static const F4_t luma_coef( //
             0.299f * X, 0.587f * X, 0.114f * X, 0.0f * X
-            );
+                    );
     
     // Laplacian Gaussian Kernel is:
     
@@ -81,8 +81,8 @@ void SEAMC_gaussian( //
             for (int yy = y - 1; yy <= y + 1; yy++) {
                 for (int xx = x - 1; xx <= x + 1; xx++) {
                     F4_t pix = readImage4Clip(SRC, xx, yy);
-                     pix *= kernelWeights[weight++];
-                     outColor += pix;
+                    pix *= kernelWeights[weight++];
+                    outColor += pix;
                 }
             }
             // Write the output value to the result Matrix:
@@ -96,31 +96,33 @@ void SEAMC_gradient( //
         const int width, const int height)
 {
     static const float X = 1.0f;
-    static const F4_t luma_coef(//
+    static const F4_t luma_coef( //
             0.299f * X, 0.587f * X, 0.114f * X, 0.0f * X
-            );
-
+                    );
+    
     const IMG4_t SRC(srcImg, width, height);
     for (int y = 0; y < height; y++) {
         float *pResultRow = resultMatrix[y];
         for (int x = 0; x < width; x++) {
-             // Determine what portion of image to operate on:
-             I2_t leftPixelCoord (x - 1, y);
-             I2_t rightPixelCoord(x + 1, y);
-             I2_t abovePixelCoord(x, y + 1);
-             I2_t belowPixelCoord(x, y - 1);
-             I2_t PixelCoord(x, y);     // This is location of pixel whose gradient is being computed.
-
-                 // get luminescence values for pixels:
-                 float leftpixel = dot4(luma_coef, readImage4Clip(SRC, leftPixelCoord));
-                 float rightpixel = dot4(luma_coef,readImage4Clip(SRC, rightPixelCoord));
-                 float abovepixel = dot4(luma_coef, readImage4Clip(SRC,  abovePixelCoord));
-                 float belowpixel = dot4(luma_coef, readImage4Clip(SRC, belowPixelCoord));
-                 float gradient = fabs(rightpixel - leftpixel) + fabs(abovepixel - belowpixel);
-                 gradient *= 1024.0f;
-                 gradient += 256;
-
-                 pResultRow[x] = gradient;
+            // Determine what portion of image to operate on:
+            I2_t leftPixelCoord(x - 1, y);
+            I2_t rightPixelCoord(x + 1, y);
+            I2_t abovePixelCoord(x, y + 1);
+            I2_t belowPixelCoord(x, y - 1);
+            I2_t PixelCoord(x, y);    // This is location of pixel whose gradient is being computed.
+                    
+            // get luminescence values for pixels:
+            float leftpixel = dot4(luma_coef, readImage4Clip(SRC, leftPixelCoord));
+            float rightpixel = dot4(luma_coef, readImage4Clip(SRC, rightPixelCoord));
+            float abovepixel = dot4(luma_coef, readImage4Clip(SRC, abovePixelCoord));
+            float belowpixel = dot4(luma_coef, readImage4Clip(SRC, belowPixelCoord));
+            //float gradient = fabs(rightpixel - leftpixel) + fabs(abovepixel - belowpixel);
+            // Slightly different formulation of gradient
+            float gradient = sqrt(pow(rightpixel - leftpixel, 2) + pow(abovepixel - belowpixel, 2));
+            gradient *= 1024.0f;
+            gradient += 256;
+            
+            pResultRow[x] = gradient;
         }
     }
 }

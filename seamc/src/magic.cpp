@@ -143,7 +143,7 @@ MagickWand* MW_Carve(const MagickWand *mw_in, int newH, int newW, bool isCOLOR, 
     M_in = (void**) np_free_matrix_float((float**) M_in);
     
     // Don't actually shrink if just drawing lines
-    mw_temp = MW_FromMatrix(M_out, (drawLINE) ? h : newH, (drawLINE) ? w:newW, isCOLOR);
+    mw_temp = MW_FromMatrix(M_out, (drawLINE) ? h : newH, (drawLINE) ? w : newW, isCOLOR);
     M_out = (void**) np_free_matrix_float((float**) M_out);
     
     return mw_temp;
@@ -177,7 +177,8 @@ MagickWand* IntMatrixToNewImage(int** M, int img_width, int img_height)
     return m_wand;
 }
 
-void MW_DumpMatrix(void** M, int H, int W, const char*fileName, bool isCOLOR) {
+void MW_DumpMatrix(void** M, int H, int W, const char*fileName, bool isCOLOR)
+{
     MagickWand* mw_out = MW_FromMatrix(M, H, W, isCOLOR);
     if (!mw_out) return;
     MagickBooleanType mw_ok = MagickWriteImage(mw_out, fileName);
