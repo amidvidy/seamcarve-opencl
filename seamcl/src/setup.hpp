@@ -27,8 +27,8 @@ namespace setup {
             std::cerr << "DESIRED WIDTH must be an integer." << std::endl;
             exit(-1);
         } else if (! (s2 >> desiredHeight)) {
-                std::cerr << "DESIRED HEIGHT must be an integer." << std::endl;
-                exit(-1);
+            std::cerr << "DESIRED HEIGHT must be an integer." << std::endl;
+            exit(-1);
         }
 
     }

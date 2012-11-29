@@ -68,14 +68,16 @@ int main(int argc, char** argv) {
     cl::Image2D *curInputImage = &inputImage;
     cl::Image2D *curOutputImage = &blurredImage;
 
-    colsToRemove = 100;
+    uint64 totalTimeMillis = 0;
+
+    colsToRemove = 350;
     int colsRemoved = 0;
 
     // Outer iterator, still need to figure out height
     //while (width > desiredWidth || height > desiredHeight) {
     while (colsRemoved < colsToRemove) {
 
-        int64 startTime = verify::timeMillis();
+        uint64 startTime = verify::timeMillis();
 
         // NOTE: Only one object detection kernel A-C can be left uncommented:
 
@@ -83,13 +85,14 @@ int main(int argc, char** argv) {
         kernel::blur(context, cmdQueue,
                      *curInputImage, *curOutputImage, sampler,
                      height, width, colsRemoved);
-
+        cmdQueue.flush();
         cmdQueue.finish();
         kernel::gradient(context, cmdQueue,
                          *curOutputImage,
                          energyMatrix, sampler,
                          height, width, colsRemoved);
 
+        cmdQueue.flush();
         cmdQueue.finish();
         // Kernel B: Convolve with Laplacian of Gaussian:
         //kernel::laplacian(context, cmdQueue, *curInputImage, energyMatrix, sampler, height, width, colsRemoved);
@@ -101,23 +104,26 @@ int main(int argc, char** argv) {
         kernel::maskUnreachable(context, cmdQueue,
                                 energyMatrix,
                                 width, height, pitch, colsRemoved);
+        cmdQueue.flush();
         cmdQueue.finish();
         // Perform dynamic programming top-bottom
         kernel::computeSeams(context, cmdQueue,
                              energyMatrix,
                              width, height, pitch, colsRemoved);
         // TODO: transpose and perform dynamic programming left-right
+        cmdQueue.flush();
         cmdQueue.finish();
         // Find min vertical seam
         kernel::findMinSeamVert(context, cmdQueue,
                                 energyMatrix, vertMinEnergy, vertMinIdx,
                                 width, height, pitch, colsRemoved);
-
+        cmdQueue.flush();
         cmdQueue.finish();
         // Backtrack
         kernel::backtrack(context, cmdQueue,
                           energyMatrix, vertSeamPath, vertMinIdx,
                           width, height, pitch, colsRemoved);
+        cmdQueue.flush();
         cmdQueue.finish();
         // for debugging
         //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
@@ -126,20 +132,20 @@ int main(int argc, char** argv) {
                           *curInputImage, *curOutputImage,
                           vertSeamPath, sampler,
                           width, height, colsRemoved + 1);
+        cmdQueue.flush();
         cmdQueue.finish();
         ++colsRemoved;
+
         // Swap pointers
         std::swap(curInputImage, curOutputImage);
 
-        std::cout << "Iteration:\t" << colsRemoved << std::endl;
-        std::cout << "Time(msec):\t" << verify::timeMillis() - startTime << std::endl;
+        totalTimeMillis += (verify::timeMillis() - startTime);
     }
 
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
-
     image::save(cmdQueue, *curOutputImage, outputFile, height, width);
 
-    std::cout << "SUCCESS!" << std::endl;
-
+    std::cout << "Carve completed." << std::endl;
+    std::cout << "Avg time per iteration:\t" << totalTimeMillis / colsToRemove << " ms" << std::endl;
 }

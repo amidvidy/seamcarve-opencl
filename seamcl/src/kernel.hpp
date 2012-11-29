@@ -250,10 +250,10 @@ namespace kernel {
         //TODO(amidvidy): this should be configurable with a flag
 
         // /** DEBUGGING */
-        // float *originalEnergyMatrix = new float[width * height];
-        // // read in original data
+        float *originalEnergyMatrix = new float[width * height];
+        // read in original data
 
-        // mem::read(ctx, cmdQueue, originalEnergyMatrix, energyMatrix, width * height);
+        mem::read(ctx, cmdQueue, originalEnergyMatrix, energyMatrix, width * height);
 
         // /** END DEBUGGING **/
 
@@ -264,24 +264,26 @@ namespace kernel {
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
-            //delete [] originalEnergyMatrix;
+            delete [] originalEnergyMatrix;
             exit(-1);
         }
 
         // /** DEBUGGING **/
-        // float *deviceResult = new float[width * height];
-        // mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
+        cmdQueue.flush();
+        cmdQueue.finish();
+        float *deviceResult = new float[width * height];
+        mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
 
-        // if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch, colsRemoved)) {
-        //     std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
-        //     delete [] originalEnergyMatrix;
-        //     delete [] deviceResult;
-        //     exit(-1);
-        // }
+        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch, colsRemoved)) {
+            std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
+            delete [] originalEnergyMatrix;
+            delete [] deviceResult;
+            exit(-1);
+        }
 
-        // delete [] originalEnergyMatrix;
-        // delete [] deviceResult;
-        /** END DEBUGGING **/
+        delete [] originalEnergyMatrix;
+        delete [] deviceResult;
+        // //END DEBUGGING
     }
 
     void backtrack(cl::Context &ctx,
@@ -333,12 +335,12 @@ namespace kernel {
         }
 
         // /** DEBUGGING **/
-        // int deviceResult[height];
+        int deviceResult[height];
 
-        // mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
-        // for (int i = height - 5; i < height; ++i) {
-        //     std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
-        // }
+        mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
+        for (int i = height - 5; i < height; ++i) {
+            std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
+        }
 
     }
 
