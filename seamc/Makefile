@@ -52,7 +52,7 @@ diff: $(OUTIMG)
 	display $(DIFFIMG)
 
 $(APPNAME): $(BUILDIR)/headers $(OBJ) | $(BUILDIR)
-	gcc $(OBJ) $(LIBS) -o $@
+	g++ $(OBJ) $(LIBS) -o $@
 
 $(BUILDIR)/headers: $(HDR) | $(BUILDIR)
 	#rm -f $(OBJ) #Header changed, remove ALL object code!

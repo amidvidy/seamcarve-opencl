@@ -6,6 +6,24 @@
 #include <stddef.h>
 #include <stdint.h>
 
+struct F4_t {
+    float x, y, z, w;
+    
+    inline F4_t(): x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+    inline F4_t(float iX, float iY, float iZ, float iW):
+        x(iX), y(iY), z(iZ), w(iW) {}
+};
+
+inline float dot4(const F4_t &A4, const F4_t &B4) {
+    return (A4.x * B4.x) + (A4.y * B4.y) + (A4.z * B4.z) + (A4.w * B4.w);
+}
+
+inline F4_t readImage4Clip(const F4_t **IMG4, int x, int y, int width, int height) {
+    const int clipX = (x<0) ? 0 : (x>width ) ? width  : x;
+    const int clipY = (y<0) ? 0 : (y>height) ? height : y;
+    return IMG4[clipY][clipX]; // As array of ptr to array of F4_t
+}
+
 /*
  ** Can turn into something else later, and matrix
  **   storage could change from current (convenient)

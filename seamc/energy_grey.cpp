@@ -3,7 +3,7 @@
  ** Translated from Python to C...then onward.
  */
 
-#include "energy_old.h"
+#include "energy_grey.h"
 #include "seamc.h"
 #include "numcy.h"
 
@@ -16,7 +16,7 @@
  ** Expected to be array of arrays at the moment.
  **   Might change to a linear run of floats instead?
  */
-void SEAMC_mk_kernel(float** K)
+void SEAMC_mKONV_kernel(float** K)
 {
     float s, c0, c1, *pK_y;
     int dimX = 5, dimY = 5;
