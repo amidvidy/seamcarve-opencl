@@ -101,7 +101,7 @@ void** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW, bool isCOLOR)
     
     //mw_ok = ModifyImage(&im_in, ex); // Not sure what all this does but
     //mw_ok = SetGrayscaleImage(im_in); // This method doesn't seem to exist!
-    
+    mw_ok = MagickTrue;
     for (int y = 0; ((mw_ok != MagickFalse) && (y < h)); y++) {
         // Pop a row at a time, intensity/grayscale float
         mw_ok = ExportImagePixels(im_in, 0, y, w, 1, pixMap, FloatPixel, M[y], im_ex);

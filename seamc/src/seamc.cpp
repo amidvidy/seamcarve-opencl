@@ -136,10 +136,10 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
     }
     
     SEAMC_WORK_t WORK; // Consistent values across multiple SEAMC calls (rather than globals)
-    int32_t* CARVE = np_zero_array_int32(inH);
-    float** GRAD = np_zero_matrix_float(inH, inW, NULL);
-    float** COST = np_zero_matrix_float(inH, inW, NULL);
-    F4_t** blurM = (F4_t**) np_zero_matrix_float(fullHeight, fullWidth * pixDepth, NULL);
+    int32_t* CARVE = np_zero_array_int32(fullHeight);
+    float** GRAD = np_zero_matrix_float(fullHeight, fullWidth, NULL);
+    float** COST = np_zero_matrix_float(fullHeight, fullWidth, NULL);
+    F4_t** BLUR = (F4_t**) np_zero_matrix_float(fullHeight, fullWidth * pixDepth, NULL);
     
     WORK.width = inW;
     WORK.height = inH;
@@ -156,10 +156,10 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
         DebugMatrix((void**) srcIM, WORK.width, WORK.height, "0_start", remainWidth, isCOLOR);
         if (isCOLOR) {
             //SEAMC_glaplauxian(O, (const F4_t**) srcIM, WORK.width, WORK.height);
-            SEAMC_gaussian(blurM, (const F4_t**) srcIM, WORK.width, WORK.height);
-            DebugMatrix((void**) blurM, WORK.width, WORK.height, "1_blur", remainWidth, true);
+            SEAMC_gaussian(BLUR, (const F4_t**) srcIM, WORK.width, WORK.height);
+            DebugMatrix((void**) BLUR, WORK.width, WORK.height, "1_blur", remainWidth, true);
             
-            SEAMC_gradient(GRAD, const_cast<const F4_t**>(blurM), WORK.width, WORK.height);
+            SEAMC_gradient(GRAD, const_cast<const F4_t**>(BLUR), WORK.width, WORK.height);
         } else {
             if (!KONV) {
                 KONV = np_zero_matrix_float(5, 5, NULL);
@@ -208,6 +208,7 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
     GRAD = np_free_matrix_float(GRAD);
     COST = np_free_matrix_float(COST);
     KONV = np_free_matrix_float(KONV);
+    BLUR = (F4_t**) np_free_matrix_float((float**) BLUR);
     
     return newM;
 }
