@@ -21,8 +21,8 @@ __kernel void gaussian_laplacian(__read_only image2d_t srcImg,
                                1.0f, 4.0f, 5.0f, 3.0f,   0.0f,   3.0f,   5.0f, 4.0f, 1.0f,
                                1.0f, 2.0f, 4.0f, 5.0f,   5.0f,   5.0f,   4.0f, 2.0f, 1.0f,
                                0.0f, 1.0f, 1.0f, 2.0f,   2.0f,   2.0f,   1.0f, 1.0f, 0.0f};
-    
-    int2 tid = (int2) (get_global_id(0), get_global_id(1));		 
+
+    int2 tid = (int2) (get_global_id(0), get_global_id(1));
     int2 startImageCoord = tid - 4;
     int2 endImageCoord   = tid + 4;
     if (tid.x < width && tid.y < height)
