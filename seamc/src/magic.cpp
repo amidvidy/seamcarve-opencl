@@ -176,3 +176,10 @@ MagickWand* IntMatrixToNewImage(int** M, int img_width, int img_height)
     iterator = DestroyPixelIterator(iterator);
     return m_wand;
 }
+
+void MW_DumpMatrix(void** M, int H, int W, const char*fileName, bool isCOLOR) {
+    MagickWand* mw_out = MW_FromMatrix(M, H, W, isCOLOR);
+    if (!mw_out) return;
+    MagickBooleanType mw_ok = MagickWriteImage(mw_out, fileName);
+    if (mw_out) mw_out = DestroyMagickWand(mw_out);
+}

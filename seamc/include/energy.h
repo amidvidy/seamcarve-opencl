@@ -9,8 +9,15 @@
 #include <math.h>
 #include <time.h>
 
-void SEAMC_glaplauxian(const F4_t **srcImg, float** resultMatrix,
-              const int width, const int height);
-        
+void SEAMC_glaplauxian( //
+        float** resultMatrix, const F4_t **srcImg, //
+        const int width, const int height);
+void SEAMC_gaussian( //
+        F4_t** resultImage, const F4_t **srcImg, //
+        const int width, const int height);
+void SEAMC_gradient( //
+        float** resultMatrix, const F4_t **srcImg, //
+        const int width, const int height);
+
 #endif // _ENERGY_H_
 
