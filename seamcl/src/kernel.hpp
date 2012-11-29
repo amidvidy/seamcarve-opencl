@@ -320,6 +320,48 @@ namespace kernel {
 
     }
 
+    void findMinSeamVert(cl::Context &ctx,
+                         cl::CommandQueue &cmdQueue,
+                         cl::Buffer &energyMatrix,
+                         cl::Buffer &vertMinEnergy,
+                         cl::Buffer &vertMinIdx,
+                         int height,
+                         int width) {
+        // Setup Kernel
+        cl::Kernel kernel = setup::kernel(ctx, std::string("findMinVert.cl"),
+                                          std::string("find_min_vert"));
+        cl_int errNum;
+        errNum = kernel.setArg(0, energyMatrix);
+        errNum |= kernel.setArg(1, vertMinEnergy);
+        errNum |= kernel.setArg(2, vertMinIdx);
+        errNum |= kernel.setArg(3, cl::__local(256 * sizeof(float)));
+        errNum |= kernel.setArg(4, cl::__local(256 * sizeof(float)));
+        errNum |= kernel.setArg(5, width);
+        errNum |= kernel.setArg(6, height);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting findMinSeamVert arguments." << std::endl;
+            exit(-1);
+        }
+
+        // This kernel could be written to use more than one work group, but its probably not worth it.
+
+        cl::NDRange offset = cl::NDRange(0);
+        cl::NDRange localWorkSize = cl::NDRange(256);
+        cl::NDRange globalWorkSize = cl::NDRange(256);
+
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize);
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
+            exit(-1);
+        }
+
+
+    }
+
     /**
      * Computes the laplacian of the gaussian convolution
      *  with an image (using openCL).
@@ -342,7 +384,8 @@ namespace kernel {
 
 
         // Setup kernel
-        cl::Kernel kernel = setup::kernel(ctx, std::string("LaplacianGaussianKernel.cl"), std::string("gaussian_laplacian"));
+        cl::Kernel kernel = setup::kernel(ctx, std::string("LaplacianGaussianKernel.cl"),
+                                          std::string("gaussian_laplacian"));
 
         cl_int errNum;
 
