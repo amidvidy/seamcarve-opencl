@@ -11,24 +11,24 @@ BUILDIR ?= build
 FLAGS ?= -O0 -Wall -g -fno-inline-functions
 LIBS ?= -pthread -fopenmp
 
-CSRCS := $(wildcard src/*.c)
-CPSRCS:= $(wildcard src/*.cpp)
-HDR   := $(wildcard include/*.h)
+CSRCS := $(wildcard *.c)
+CPSRCS:= $(wildcard *.cpp)
+HDR   := $(wildcard *.h *.hpp)
 
-OBJ := $(CSRCS:src/%.c=$(BUILDIR)/%.o) $(CPSRCS:src/%.cpp=$(BUILDIR)/%.o)
+OBJ := $(CSRCS:%.c=$(BUILDIR)/%.c.o) $(CPSRCS:%.cpp=$(BUILDIR)/%.cpp.o)
 
 WandFLAGS ?= `pkg-config --cflags MagickWand` #`MagickWand-config --cflags --cppflags`
 WandLIBS  ?= `pkg-config --libs MagickWand` #`MagickWand-config --ldflags --libs`
 
-CFLAGS = -std=c99 $(WandFLAGS) $(FLAGS) -I include
-CPFLAGS = $(WandFLAGS) $(FLAGS) -I include
+CFLAGS = -std=c99 $(WandFLAGS) $(FLAGS)
+CPFLAGS = $(WandFLAGS) $(FLAGS)
 LIBS  += $(WandLIBS)
 
 CC ?= gcc
 CP ?= g++
 
 
-default: all
+default: test
 
 all: $(APPNAME)
 
@@ -58,12 +58,13 @@ $(BUILDIR)/headers: $(HDR) | $(BUILDIR)
 	#rm -f $(OBJ) #Header changed, remove ALL object code!
 	@touch $@ #Track single mod date of all header files
 
-$(BUILDIR)/%.o: src/%.c | $(BUILDIR)/headers
+$(BUILDIR)/%.c.o: %.c | $(BUILDIR)/headers
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILDIR)/%.o: src/%.cpp | $(BUILDIR)/headers
+$(BUILDIR)/%.cpp.o: %.cpp | $(BUILDIR)/headers
 	$(CP) $(CPFLAGS) -c $< -o $@
 
+obj: $(OBJ)
 
 settings:
 
@@ -74,5 +75,5 @@ $(BUILDIR):
 clean:
 	rm -rf build $(APPNAME) out.* diff.*
 
-.PHONY: clean fresh test view diff settings $(OUTIMG)
+.PHONY: clean fresh obj test view diff settings
 

@@ -19,7 +19,7 @@ int32_t** np_zero_matrix_int32(size_t height, size_t width, size_t *pPitch)
     
     // There is a single "backing array"...
     int32_t *arr = (int32_t*) calloc(height * pitch, sizeof(int32_t));
-    if (!arr) return NULL ;
+    if (!arr) return NULL;
     
     // The "y" axis is an array of pointers into that single backing array...
     int32_t **arrarr = (int32_t**) malloc(height * sizeof(int32_t*));
@@ -36,7 +36,7 @@ int32_t** np_zero_matrix_int32(size_t height, size_t width, size_t *pPitch)
 int32_t* np_free_array_int32(int32_t* A)
 {
     if (A) free((void*) A);
-    return NULL ;
+    return NULL;
 }
 
 int32_t** np_free_matrix_int32(int32_t** M)
@@ -45,7 +45,7 @@ int32_t** np_free_matrix_int32(int32_t** M)
         if (M[0]) free((void*) M[0]); // Free the backing array...
         free((void*) M); // ...then the indexing array.
     }
-    return NULL ;
+    return NULL;
 }
 
 /* WARNING: These just cheat and cast int32 to float (usually 32-bits too) */
