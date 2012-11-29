@@ -4,6 +4,9 @@
 // OpenCL
 #include <CL/cl.hpp>
 
+// STL
+#include <iostream>
+
 // SeamCL
 #include "image.hpp"
 #include "setup.hpp"
@@ -251,9 +254,12 @@ namespace kernel {
                    int pitch) {
 
         // Setup
+        std::cout << "Building kernel" << std::endl;
         cl::Kernel kernel = setup::kernel(ctx, std::string("Backtrack1.cl"), std::string("Backtrack"));
 
         cl_int errNum;
+
+        std::cout << "Setting backtrack args" << std::endl;
 
         // Set kernel arguments
         errNum = kernel.setArg(0, energyMatrix);
@@ -264,17 +270,53 @@ namespace kernel {
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting backtrack kernel arguments." << std::endl;
+            exit(-1);
         }
 
         cl::NDRange offset = cl::NDRange(0);
         cl::NDRange localWorkSize = cl::NDRange(1);
         cl::NDRange globalWorkSize = cl::NDRange(256);
 
+        std::cout << "Launching backtrack kernel" << std::endl;
         errNum = cmdQueue.enqueueNDRangeKernel(kernel,
                                                offset,
                                                globalWorkSize,
                                                localWorkSize);
 
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueueing backTrack kernel for execution." << std::endl;
+            exit(-1);
+        }
+
+        /** DEBUGGING **/
+        int *deviceResult = new int[height];
+        errNum = cmdQueue.enqueueReadBuffer(carveArray,
+                                            CL_TRUE,
+                                            0,
+                                            height * sizeof(int),
+                                            (void *) deviceResult,
+                                            NULL,
+                                            NULL);
+
+        float *energyMatrixCopy = new float[height * width];
+        errNum = cmdQueue.enqueueReadBuffer(energyMatrix,
+                                            CL_TRUE,
+                                            0,
+                                            height * width * sizeof(float),
+                                            (void *) energyMatrixCopy,
+                                            NULL,
+                                            NULL);
+
+        if (!verify::backtrack(deviceResult, energyMatrixCopy, width, height, width)) {
+            std::cerr << "Incorrect results from kernel::backtrack" << std::endl;
+            delete [] energyMatrixCopy;
+            delete [] deviceResult;
+            exit(-1);
+        }
+
+        delete [] energyMatrixCopy;
+        delete [] deviceResult;
 
     }
 
