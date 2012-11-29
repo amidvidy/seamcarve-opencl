@@ -273,12 +273,12 @@ namespace kernel {
         }
 
         /** DEBUGGING **/
-        int deviceResult[height];
+        //int deviceResult[height];
 
-        mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
-        for (int i = 0; i < height; ++i) {
-            std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
-        }
+        //mem::read(ctx, cmdQueue, deviceResult, vertSeamPath, height);
+        //for (int i = 0; i < height; ++i) {
+        //std::cout << "deviceResult[" << i << "]=\t" << deviceResult[i] << std::endl;
+        //}
 
     }
 
@@ -392,7 +392,7 @@ namespace kernel {
         // Read data into an image object
         cl::Image2D gradientImage = cl::Image2D(ctx,
                                                 (cl_mem_flags) CL_MEM_READ_WRITE,
-                                                cl::ImageFormat(CL_LUMINANCE, CL_FLOAT),
+                                                cl::ImageFormat(CL_INTENSITY, CL_FLOAT),
                                                 width,
                                                 height,
                                                 0,
@@ -429,6 +429,45 @@ namespace kernel {
         /** END DEBUGGING */
 
     } // End of laplacian method.
+
+
+    void paintSeam(cl::Context &ctx,
+                   cl::CommandQueue &cmdQueue,
+                   cl::Image2D &inputImage,
+                   cl::Buffer &vertSeamPath,
+                   int width,
+                   int height) {
+
+        cl::Kernel kernel = setup::kernel(ctx, std::string("PaintSeam.cl"), std::string("paint_seam"));
+
+        cl_int errNum;
+
+        errNum = kernel.setArg(0, inputImage);
+        errNum |= kernel.setArg(1, vertSeamPath);
+        errNum |= kernel.setArg(2, width);
+        errNum |= kernel.setArg(3, height);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error setting paintseam kernel arguments." << std::endl;
+            exit(-1);
+        }
+
+        cl::NDRange offset = cl::NDRange(0, 0);
+        cl::NDRange localWorkSize = cl::NDRange(16, 16);
+        cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
+                                                 math::roundUp(localWorkSize[1], height));
+        std::cout << "launching PaintSeam" << std::endl;
+        errNum = cmdQueue.enqueueNDRangeKernel(kernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize);
+        cmdQueue.flush();
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error enqueuing paintSeam kernel for execution." << std::endl;
+            exit(-1);
+        }
+
+    }
 
 } // namespace kernel {
 
