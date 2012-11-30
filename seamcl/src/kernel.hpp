@@ -59,6 +59,7 @@ namespace kernel {
      */
     void blur(cl::Context &ctx,
               cl::CommandQueue &cmdQueue,
+              cl::Event &blurEvent,
               cl::Image2D &inputImage,
               cl::Image2D &outputImage,
               cl::Sampler &sampler,
@@ -91,7 +92,9 @@ namespace kernel {
         errNum = cmdQueue.enqueueNDRangeKernel(blurKernel,
                                                offset,
                                                globalWorkSize,
-                                               localWorkSize);
+                                               localWorkSize,
+                                               NULL,
+                                               &blurEvent);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing blur kernel for execution." << std::endl;
             exit(-1);
@@ -112,6 +115,7 @@ namespace kernel {
      */
     void gradient(cl::Context &ctx,
                   cl::CommandQueue &cmdQueue,
+                  cl::Event &gradientEvent,
                   cl::Image2D &inputImage,
                   cl::Buffer &energyMatrix,
                   cl::Sampler &sampler,
@@ -141,7 +145,9 @@ namespace kernel {
         errNum = cmdQueue.enqueueNDRangeKernel(gradientKernel,
                                                offset,
                                                globalWorkSize,
-                                               localWorkSize);
+                                               localWorkSize,
+                                               NULL,
+                                               &gradientEvent);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing gradient kernel for execution." << std::endl;
@@ -192,21 +198,13 @@ namespace kernel {
 
     void maskUnreachable(cl::Context &ctx,
                          cl::CommandQueue &cmdQueue,
+                         cl::Event &maskUnreachableEvent,
                          cl::Buffer &energyMatrix,
                          int width,
                          int height,
                          int pitch,
                          int colsRemoved) {
         cl_int errNum;
-        /**
-        cl::Kernel k = setup::kernel(ctx, std::string("maskUnreachable.cl"), std::string("mask_unreachable"));
-
-        errNum = k.setArg(0, energyMatrix);
-        errNum |= k.setArg(1, width);
-        errNum |= k.setArg(2, height);
-        errNum |= k.setArg(3, pitch);
-        errNum |= k.setArg(4, colsRemoved);
-        **/
 
         errNum = maskUnreachableKernel.setArg(0, energyMatrix);
         errNum |= maskUnreachableKernel.setArg(1, width);
@@ -228,7 +226,9 @@ namespace kernel {
         errNum = cmdQueue.enqueueNDRangeKernel(maskUnreachableKernel,
                                                offset,
                                                globalWorkSize,
-                                               localWorkSize);
+                                               localWorkSize,
+                                               NULL,
+                                               &maskUnreachableEvent);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueueing maskUnreachable kernel." << std::endl;
@@ -238,6 +238,7 @@ namespace kernel {
 
     void computeSeams(cl::Context &ctx,
                       cl::CommandQueue &cmdQueue,
+                      cl::Event &computeSeamsEvent,
                       cl::Buffer &energyMatrix,
                       int width,
                       int height,
@@ -275,7 +276,9 @@ namespace kernel {
         errNum = cmdQueue.enqueueNDRangeKernel(computeSeamKernel,
                                                offset,
                                                globalWorkSize,
-                                               localWorkSize);
+                                               localWorkSize,
+                                               NULL,
+                                               &computeSeamsEvent);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
@@ -301,6 +304,7 @@ namespace kernel {
 
     void backtrack(cl::Context &ctx,
                    cl::CommandQueue &cmdQueue,
+                   cl::Event &backtrackEvent,
                    cl::Buffer &energyMatrix,
                    cl::Buffer &vertSeamPath,
                    cl::Buffer &vertMinIdx,
@@ -332,7 +336,9 @@ namespace kernel {
         errNum = cmdQueue.enqueueNDRangeKernel(backtrackKernel,
                                                offset,
                                                globalWorkSize,
-                                               localWorkSize);
+                                               localWorkSize,
+                                               NULL,
+                                               &backtrackEvent);
 
 
         if (errNum != CL_SUCCESS) {
@@ -352,6 +358,7 @@ namespace kernel {
 
     void findMinSeamVert(cl::Context &ctx,
                          cl::CommandQueue &cmdQueue,
+                         cl::Event &findMinSeamVertEvent,
                          cl::Buffer &energyMatrix,
                          cl::Buffer &vertMinEnergy,
                          cl::Buffer &vertMinIdx,
@@ -385,7 +392,9 @@ namespace kernel {
         errNum = cmdQueue.enqueueNDRangeKernel(findMinSeamVertKernel,
                                                offset,
                                                globalWorkSize,
-                                               localWorkSize);
+                                               localWorkSize,
+                                               NULL,
+                                               &findMinSeamVertEvent);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
             exit(-1);
@@ -538,6 +547,7 @@ namespace kernel {
 
     void carveVert(cl::Context &ctx,
                    cl::CommandQueue &cmdQueue,
+                   cl::Event &carveVertEvent,
                    cl::Image2D &inputImage,
                    cl::Image2D &outputImage,
                    cl::Buffer &vertSeamPath,
@@ -565,7 +575,12 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(16, 16);
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
-        errNum = cmdQueue.enqueueNDRangeKernel(carveVertKernel, offset, globalWorkSize, localWorkSize);
+        errNum = cmdQueue.enqueueNDRangeKernel(carveVertKernel,
+                                               offset,
+                                               globalWorkSize,
+                                               localWorkSize,
+                                               NULL,
+                                               &carveVertEvent);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueueing carveVert kernel for execution." << std::endl;
             exit(-1);

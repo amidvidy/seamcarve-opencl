@@ -73,6 +73,25 @@ int main(int argc, char** argv) {
     colsToRemove = 350;
     int colsRemoved = 0;
 
+    // profiling
+    cl::Event blurEvent;
+    cl::Event gradientEvent;
+    cl::Event maskUnreachableEvent;
+    cl::Event computeSeamsEvent;
+    cl::Event findMinSeamVertEvent;
+    cl::Event backtrackEvent;
+    cl::Event carveVertEvent;
+
+    cl_ulong blurTimeMicros = 0;
+    cl_ulong gradientTimeMicros = 0;
+    cl_ulong maskUnreachableTimeMicros = 0;
+    cl_ulong computeSeamsTimeMicros = 0;
+    cl_ulong findMinSeamVertTimeMicros = 0;
+    cl_ulong backtrackTimeMicros = 0;
+    cl_ulong carveVertTimeMicros = 0;
+
+    cl_ulong kernelStartTime, kernelEndTime;
+
     // Outer iterator, still need to figure out height
     //while (width > desiredWidth || height > desiredHeight) {
     while (colsRemoved < colsToRemove) {
@@ -82,12 +101,13 @@ int main(int argc, char** argv) {
         // NOTE: Only one object detection kernel A-C can be left uncommented:
 
         // Kernel A: Blur image and then compute gradient.
-        kernel::blur(context, cmdQueue,
+        kernel::blur(context, cmdQueue, blurEvent,
                      *curInputImage, *curOutputImage, sampler,
                      height, width, colsRemoved);
         cmdQueue.flush();
         cmdQueue.finish();
-        kernel::gradient(context, cmdQueue,
+
+        kernel::gradient(context, cmdQueue, gradientEvent,
                          *curOutputImage,
                          energyMatrix, sampler,
                          height, width, colsRemoved);
@@ -101,26 +121,26 @@ int main(int argc, char** argv) {
 
 
         // Mask garbage values from previous iterations as well as stencil artifacts
-        kernel::maskUnreachable(context, cmdQueue,
+        kernel::maskUnreachable(context, cmdQueue, maskUnreachableEvent,
                                 energyMatrix,
                                 width, height, pitch, colsRemoved);
         cmdQueue.flush();
         cmdQueue.finish();
         // Perform dynamic programming top-bottom
-        kernel::computeSeams(context, cmdQueue,
+        kernel::computeSeams(context, cmdQueue, computeSeamsEvent,
                              energyMatrix,
                              width, height, pitch, colsRemoved);
         // TODO: transpose and perform dynamic programming left-right
         cmdQueue.flush();
         cmdQueue.finish();
         // Find min vertical seam
-        kernel::findMinSeamVert(context, cmdQueue,
+        kernel::findMinSeamVert(context, cmdQueue, findMinSeamVertEvent,
                                 energyMatrix, vertMinEnergy, vertMinIdx,
                                 width, height, pitch, colsRemoved);
         cmdQueue.flush();
         cmdQueue.finish();
         // Backtrack
-        kernel::backtrack(context, cmdQueue,
+        kernel::backtrack(context, cmdQueue, backtrackEvent,
                           energyMatrix, vertSeamPath, vertMinIdx,
                           width, height, pitch, colsRemoved);
         cmdQueue.flush();
@@ -128,7 +148,7 @@ int main(int argc, char** argv) {
         // for debugging
         //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
 
-        kernel::carveVert(context, cmdQueue,
+        kernel::carveVert(context, cmdQueue, carveVertEvent,
                           *curInputImage, *curOutputImage,
                           vertSeamPath, sampler,
                           width, height, colsRemoved + 1);
@@ -140,6 +160,34 @@ int main(int argc, char** argv) {
         std::swap(curInputImage, curOutputImage);
 
         totalTimeMillis += (verify::timeMillis() - startTime);
+
+        blurEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        blurEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        blurTimeMicros += (kernelEndTime - kernelStartTime);
+
+        gradientEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        gradientEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        gradientTimeMicros += (kernelEndTime - kernelStartTime);
+
+        maskUnreachableEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        maskUnreachableEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        maskUnreachableTimeMicros += (kernelEndTime - kernelStartTime);
+
+        computeSeamsEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        computeSeamsEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        computeSeamsTimeMicros += (kernelEndTime - kernelStartTime);
+
+        findMinSeamVertEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        findMinSeamVertEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        findMinSeamVertTimeMicros += (kernelEndTime - kernelStartTime);
+
+        backtrackEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        backtrackEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        backtrackTimeMicros += (kernelEndTime - kernelStartTime);
+
+        carveVertEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        carveVertEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        carveVertTimeMicros += (kernelEndTime - kernelStartTime);
     }
 
     // Save image to disk.
@@ -147,5 +195,12 @@ int main(int argc, char** argv) {
     image::save(cmdQueue, *curOutputImage, outputFile, height, width);
 
     std::cout << "Carve completed." << std::endl;
-    std::cout << "Avg time per iteration:\t" << totalTimeMillis / colsToRemove << " ms" << std::endl;
+    std::cout << "Avg total time per iteration:\t" << totalTimeMillis / colsToRemove << " millis" << std::endl;
+    std::cout << "Avg time for blur:\t" << blurTimeMicros / colsToRemove << " nanos" << std::endl;
+    std::cout << "Avg time for gradient:\t" << gradientTimeMicros / colsToRemove << " nanos" << std::endl;
+    std::cout << "Avg time for maskUnreachable:\t" << maskUnreachableTimeMicros / colsToRemove << " nanos" << std::endl;
+    std::cout << "Avg time for computeSeams\t" << computeSeamsTimeMicros / colsToRemove << " nanos" << std::endl;
+    std::cout << "Avg time for findMinSeamVert\t" << findMinSeamVertTimeMicros / colsToRemove << " nanos" << std::endl;
+    std::cout << "Avg time for backtrack\t" << backtrackTimeMicros / colsToRemove << " nanos" << std::endl;
+    std::cout << "Avg time for carveVert\t" << carveVertTimeMicros / colsToRemove << " nanos" << std::endl;
 }
