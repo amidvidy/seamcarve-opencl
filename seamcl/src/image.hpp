@@ -46,6 +46,30 @@ namespace image {
         return img;
     }
 
+    cl::Buffer loadBuffer(cl::Context &ctx,
+                          cl::CommandQueue &cmdQueue,
+                          std::string fileName,
+                          int &height,
+                          int &width) {
+
+        FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
+        FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
+
+        image = FreeImage_ConvertTo32Bits(image);
+        width = FreeImage_GetWidth(image);
+        height = FreeImage_GetHeight(image);
+
+        char img[width * height * 4];
+        memcpy(img, FreeImage_GetBits(image), width * height * 4);
+
+        FreeImage_Unload(image);
+
+        cl::Buffer buff = mem::buffer(ctx, cmdQueue, width * height * 4);
+        mem::write(ctx, cmdQueue, img, buff);
+
+        return buff;
+    }
+
     /**
      * Saves the contents of an image object to disk.
      * @param cmdQueue An openCL commandQueue object.
