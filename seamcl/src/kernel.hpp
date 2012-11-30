@@ -329,7 +329,6 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(1);
         cl::NDRange globalWorkSize = cl::NDRange(256);
 
-        std::cout << "Launching backtrack kernel" << std::endl;
         errNum = cmdQueue.enqueueNDRangeKernel(backtrackKernel,
                                                offset,
                                                globalWorkSize,
@@ -566,7 +565,6 @@ namespace kernel {
         cl::NDRange localWorkSize = cl::NDRange(16, 16);
         cl::NDRange globalWorkSize = cl::NDRange(math::roundUp(localWorkSize[0], width),
                                                  math::roundUp(localWorkSize[1], height));
-        std::cout << "launching CarveVert" << std::endl;
         errNum = cmdQueue.enqueueNDRangeKernel(carveVertKernel, offset, globalWorkSize, localWorkSize);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueueing carveVert kernel for execution." << std::endl;
