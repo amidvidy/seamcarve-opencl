@@ -1,5 +1,3 @@
-
-
 // Computes cost to reach each pixel from top.
 __kernel void computeSeams(__global float *ioMatrix,
                            int width,
