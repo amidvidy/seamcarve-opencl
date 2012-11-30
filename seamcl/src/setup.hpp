@@ -63,26 +63,36 @@ namespace setup {
      * @return An openCL command queue object.
      */
     cl::CommandQueue commandQueue(const cl::Context &ctx) {
-        std::vector<cl::Device> devices = ctx.getInfo<CL_CONTEXT_DEVICES>();
+      std::vector<cl::Device> devices;
+      ctx.getInfo((cl_context_info)CL_CONTEXT_DEVICES, &devices);
+      //std::vector<cl::Device> devices = ctx.getInfo<CL_CONTEXT_DEVICES>();
 
         // DEBUGGING
         for (size_t i = 0; i < devices.size(); ++i) {
             cl::Device &device = devices[i];
+	    std::string deviceName; device.getInfo((cl_device_info)CL_DEVICE_NAME, &deviceName);
+	    std::string deviceVendor; device.getInfo((cl_device_info)CL_DEVICE_VENDOR, &deviceVendor);
+	    std::string deviceProfile; device.getInfo((cl_device_info)CL_DEVICE_PROFILE, &deviceProfile);
+	    std::string deviceVersion; device.getInfo((cl_device_info)CL_DEVICE_VERSION, &deviceVersion);
+	    std::string driverVersion; device.getInfo((cl_device_info)CL_DRIVER_VERSION, &driverVersion);
+	    std::string deviceCLVersion; device.getInfo((cl_device_info)CL_DEVICE_OPENCL_C_VERSION, &deviceCLVersion);
+	    std::string deviceExtensions; device.getInfo((cl_device_info)CL_DEVICE_EXTENSIONS, &deviceExtensions);
+
             std::cout << "Info for device #" << 0 << ":" << std::endl;
             std::cout << "\tName:\t"
-                      << device.getInfo<CL_DEVICE_NAME>() << std::endl;
+                      << deviceName << std::endl;
             std::cout << "\tVendor:\t"
-                      << device.getInfo<CL_DEVICE_VENDOR>() << std::endl;
+                      << deviceVendor << std::endl;
             std::cout << "\tProfile:\t"
-                      << device.getInfo<CL_DEVICE_PROFILE>() << std::endl;
+                      << deviceProfile << std::endl;
             std::cout << "\tDevice Version:\t"
-                      << device.getInfo<CL_DEVICE_VERSION>() << std::endl;
+                      << deviceVersion << std::endl;
             std::cout << "\tDriver Version:\t"
-                      << device.getInfo<CL_DRIVER_VERSION>() << std::endl;
+                      << driverVersion << std::endl;
             std::cout << "\tDevice OpenCL C Version:\t"
-                      << device.getInfo<CL_DEVICE_OPENCL_C_VERSION>() << std::endl;
+                      << deviceCLVersion << std::endl;
             std::cout << "\tDevice Extensions:\t"
-                      << device.getInfo<CL_DEVICE_EXTENSIONS>() << std::endl;
+                      << deviceExtensions << std::endl;
         }
 
         return cl::CommandQueue(ctx, devices[0], CL_QUEUE_PROFILING_ENABLE);

@@ -1,4 +1,4 @@
-OPENCL_HOME=/opt/AMDAPP/include
+OPENCL_HOME=/home/cc/cs194/fa12/class/cs194-ab/gitroot/cs194proj/seamcl/src/
 
 BUILDDIR = build
 
@@ -27,3 +27,4 @@ clean:
 	rm -rf $(BUILDDIR) seamcl
 
 .PHONY: all clean fresh
+
