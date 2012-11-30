@@ -115,7 +115,8 @@ namespace kernel {
      */
     void gradient(cl::Context &ctx,
                   cl::CommandQueue &cmdQueue,
-                  cl::Event &gradientEvent,
+                  cl::Event &event,
+                  std::vector<cl::Event> &deps,
                   cl::Image2D &inputImage,
                   cl::Buffer &energyMatrix,
                   cl::Sampler &sampler,
@@ -147,7 +148,7 @@ namespace kernel {
                                                globalWorkSize,
                                                localWorkSize,
                                                NULL,
-                                               &gradientEvent);
+                                               &event);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing gradient kernel for execution." << std::endl;
@@ -198,7 +199,8 @@ namespace kernel {
 
     void maskUnreachable(cl::Context &ctx,
                          cl::CommandQueue &cmdQueue,
-                         cl::Event &maskUnreachableEvent,
+                         cl::Event &event,
+                         std::vector<cl::Event> &deps,
                          cl::Buffer &energyMatrix,
                          int width,
                          int height,
@@ -227,18 +229,20 @@ namespace kernel {
                                                offset,
                                                globalWorkSize,
                                                localWorkSize,
-                                               NULL,
-                                               &maskUnreachableEvent);
+                                               &deps,
+                                               &event);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueueing maskUnreachable kernel." << std::endl;
+            std::cerr << errNum << std::endl;
             exit(-1);
         }
     }
 
     void computeSeams(cl::Context &ctx,
                       cl::CommandQueue &cmdQueue,
-                      cl::Event &computeSeamsEvent,
+                      cl::Event &event,
+                      std::vector<cl::Event> &deps,
                       cl::Buffer &energyMatrix,
                       int width,
                       int height,
@@ -277,8 +281,8 @@ namespace kernel {
                                                offset,
                                                globalWorkSize,
                                                localWorkSize,
-                                               NULL,
-                                               &computeSeamsEvent);
+                                               &deps,
+                                               &event);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
@@ -304,7 +308,8 @@ namespace kernel {
 
     void backtrack(cl::Context &ctx,
                    cl::CommandQueue &cmdQueue,
-                   cl::Event &backtrackEvent,
+                   cl::Event &event,
+                   std::vector<cl::Event> &deps,
                    cl::Buffer &energyMatrix,
                    cl::Buffer &vertSeamPath,
                    cl::Buffer &vertMinIdx,
@@ -337,8 +342,8 @@ namespace kernel {
                                                offset,
                                                globalWorkSize,
                                                localWorkSize,
-                                               NULL,
-                                               &backtrackEvent);
+                                               &deps,
+                                               &event);
 
 
         if (errNum != CL_SUCCESS) {
@@ -358,7 +363,8 @@ namespace kernel {
 
     void findMinSeamVert(cl::Context &ctx,
                          cl::CommandQueue &cmdQueue,
-                         cl::Event &findMinSeamVertEvent,
+                         cl::Event &event,
+                         std::vector<cl::Event> &deps,
                          cl::Buffer &energyMatrix,
                          cl::Buffer &vertMinEnergy,
                          cl::Buffer &vertMinIdx,
@@ -393,8 +399,8 @@ namespace kernel {
                                                offset,
                                                globalWorkSize,
                                                localWorkSize,
-                                               NULL,
-                                               &findMinSeamVertEvent);
+                                               &deps,
+                                               &event);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
             exit(-1);
@@ -547,7 +553,8 @@ namespace kernel {
 
     void carveVert(cl::Context &ctx,
                    cl::CommandQueue &cmdQueue,
-                   cl::Event &carveVertEvent,
+                   cl::Event &event,
+                   std::vector<cl::Event> &deps,
                    cl::Image2D &inputImage,
                    cl::Image2D &outputImage,
                    cl::Buffer &vertSeamPath,
@@ -579,8 +586,8 @@ namespace kernel {
                                                offset,
                                                globalWorkSize,
                                                localWorkSize,
-                                               NULL,
-                                               &carveVertEvent);
+                                               &deps,
+                                               &event);
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueueing carveVert kernel for execution." << std::endl;
             exit(-1);

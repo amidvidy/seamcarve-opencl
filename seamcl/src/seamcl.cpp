@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     colsToRemove = 350;
     int colsRemoved = 0;
 
-    // profiling
+    // Events
     cl::Event blurEvent;
     cl::Event gradientEvent;
     cl::Event maskUnreachableEvent;
@@ -82,6 +82,15 @@ int main(int argc, char** argv) {
     cl::Event backtrackEvent;
     cl::Event carveVertEvent;
 
+    // Dependencies, unused for now.
+    std::vector<cl::Event> gradientDeps;
+    std::vector<cl::Event> maskUnreachableDeps;
+    std::vector<cl::Event> computeSeamsDeps;
+    std::vector<cl::Event> findMinSeamVertDeps;
+    std::vector<cl::Event> backtrackDeps;
+    std::vector<cl::Event> carveVertDeps;
+
+    // Profiling
     cl_ulong blurTimeMicros = 0;
     cl_ulong gradientTimeMicros = 0;
     cl_ulong maskUnreachableTimeMicros = 0;
@@ -95,7 +104,7 @@ int main(int argc, char** argv) {
     // Outer iterator, still need to figure out height
     //while (width > desiredWidth || height > desiredHeight) {
     while (colsRemoved < colsToRemove) {
-
+        std::cout << "Starting iteration:\t#" << colsRemoved << std::endl;
         uint64 startTime = verify::timeMillis();
 
         // NOTE: Only one object detection kernel A-C can be left uncommented:
@@ -104,16 +113,13 @@ int main(int argc, char** argv) {
         kernel::blur(context, cmdQueue, blurEvent,
                      *curInputImage, *curOutputImage, sampler,
                      height, width, colsRemoved);
-        cmdQueue.flush();
-        cmdQueue.finish();
 
-        kernel::gradient(context, cmdQueue, gradientEvent,
+        kernel::gradient(context, cmdQueue,
+                         gradientEvent, gradientDeps,
                          *curOutputImage,
                          energyMatrix, sampler,
                          height, width, colsRemoved);
 
-        cmdQueue.flush();
-        cmdQueue.finish();
         // Kernel B: Convolve with Laplacian of Gaussian:
         //kernel::laplacian(context, cmdQueue, *curInputImage, energyMatrix, sampler, height, width, colsRemoved);
 
@@ -121,38 +127,40 @@ int main(int argc, char** argv) {
 
 
         // Mask garbage values from previous iterations as well as stencil artifacts
-        kernel::maskUnreachable(context, cmdQueue, maskUnreachableEvent,
+        kernel::maskUnreachable(context, cmdQueue,
+                                maskUnreachableEvent, maskUnreachableDeps,
                                 energyMatrix,
                                 width, height, pitch, colsRemoved);
-        cmdQueue.flush();
-        cmdQueue.finish();
+
         // Perform dynamic programming top-bottom
-        kernel::computeSeams(context, cmdQueue, computeSeamsEvent,
+        kernel::computeSeams(context, cmdQueue,
+                             computeSeamsEvent, computeSeamsDeps,
                              energyMatrix,
                              width, height, pitch, colsRemoved);
         // TODO: transpose and perform dynamic programming left-right
-        cmdQueue.flush();
-        cmdQueue.finish();
+
         // Find min vertical seam
-        kernel::findMinSeamVert(context, cmdQueue, findMinSeamVertEvent,
+        kernel::findMinSeamVert(context, cmdQueue,
+                                findMinSeamVertEvent, findMinSeamVertDeps,
                                 energyMatrix, vertMinEnergy, vertMinIdx,
                                 width, height, pitch, colsRemoved);
-        cmdQueue.flush();
-        cmdQueue.finish();
+
         // Backtrack
-        kernel::backtrack(context, cmdQueue, backtrackEvent,
+        kernel::backtrack(context, cmdQueue,
+                          backtrackEvent, backtrackDeps,
                           energyMatrix, vertSeamPath, vertMinIdx,
                           width, height, pitch, colsRemoved);
-        cmdQueue.flush();
-        cmdQueue.finish();
+
         // for debugging
         //kernel::paintSeam(context, cmdQueue, inputImage, vertSeamPath, width, height);
 
-        kernel::carveVert(context, cmdQueue, carveVertEvent,
+        kernel::carveVert(context, cmdQueue,
+                          carveVertEvent, carveVertDeps,
                           *curInputImage, *curOutputImage,
                           vertSeamPath, sampler,
                           width, height, colsRemoved + 1);
-        cmdQueue.flush();
+
+        cmdQueue.flush(); // Is this call needed?
         cmdQueue.finish();
         ++colsRemoved;
 
@@ -193,8 +201,9 @@ int main(int argc, char** argv) {
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
     image::save(cmdQueue, *curOutputImage, outputFile, height, width);
-
-    std::cout << "Carve completed." << std::endl;
+    std::cout << std::endl;
+    std::cout << "Carve completed!" << std::endl;
+    std::cout << std::endl;
     std::cout << "Avg total time per iteration:\t" << totalTimeMillis / colsToRemove << " millis" << std::endl;
     std::cout << "Avg time for blur:\t" << blurTimeMicros / colsToRemove << " nanos" << std::endl;
     std::cout << "Avg time for gradient:\t" << gradientTimeMicros / colsToRemove << " nanos" << std::endl;
