@@ -53,6 +53,21 @@ namespace mem {
         }
     }
 
+    // Same as above.
+    template<typename T, std::size_t sz>
+    void write(cl::Context &ctx, cl::CommandQueue &cmdQueue, T(&arr)[sz], cl::Buffer &buff) {
+        cl_int errNum = cmdQueue.enqueueWriteBuffer(buff,
+                                                    CL_TRUE,
+                                                    0,
+                                                    sz * sizeof(T),
+                                                    (void *) arr,
+                                                    NULL,
+                                                    NULL);
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error writing buffer from device to host." << std::endl;
+            exit(-1);
+        }
+    }
 
 } // namespace mem {
 
