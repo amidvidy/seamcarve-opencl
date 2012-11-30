@@ -38,7 +38,8 @@ int main(int argc, char** argv) {
 
     // Load image into a buffer
     int width, height;
-    cl::Image2D inputImage = image::load(context, std::string(argv[1]), height, width);
+    //cl::Image2D inputImage = image::load(context, inputFile, height, width);
+    cl::Buffer inputImage = image::loadBuffer(context, cmdQueue, inputFile, height, width);
 
     // just in case we end up using padding
     int pitch = width;
@@ -47,7 +48,9 @@ int main(int argc, char** argv) {
     cl::Sampler sampler = image::sampler(context);
 
     // Intermediate buffer to hold blurred image.
-    cl::Image2D blurredImage = image::make(context, height, width);
+    cl::Buffer blurredImage = mem::buffer(context, cmdQueue, height * width * 4); // 32 bit pixels
+
+    //cl::Image2D blurredImage = image::make(context, height, width);
 
     // Allocate space on device for energy matrix
     cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
@@ -65,8 +68,10 @@ int main(int argc, char** argv) {
     int colsToRemove = width - desiredWidth;
 
     // We are going to need to swap pointers each iteration
-    cl::Image2D *curInputImage = &inputImage;
-    cl::Image2D *curOutputImage = &blurredImage;
+    cl::Buffer *curInputImage = &inputImage;
+    cl::Buffer *curOutputImage = &blurredImage;
+    //cl::Image2D *curInputImage = &inputImage;
+    //cl::Image2D *curOutputImage = &blurredImage;
 
     uint64 totalTimeMillis = 0;
 
@@ -111,7 +116,7 @@ int main(int argc, char** argv) {
 
         // Kernel A: Blur image and then compute gradient.
         kernel::blur(context, cmdQueue, blurEvent,
-                     *curInputImage, *curOutputImage, sampler,
+                     *curInputImage, *curOutputImage,
                      height, width, colsRemoved);
 
         kernel::gradient(context, cmdQueue,

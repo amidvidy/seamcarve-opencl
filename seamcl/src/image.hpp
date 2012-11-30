@@ -1,6 +1,12 @@
 #ifndef IMAGE_HPP
 #define IMAGE_HPP
 
+// FreeImage
+#include "FreeImage.h"
+
+// SeamCL
+#include "mem.hpp"
+
 // Functions relating to image handling
 namespace image {
 
@@ -59,13 +65,15 @@ namespace image {
         width = FreeImage_GetWidth(image);
         height = FreeImage_GetHeight(image);
 
-        char img[width * height * 4];
+        size_t numBytes = width * height * 4;
+
+        char img[numBytes];
         memcpy(img, FreeImage_GetBits(image), width * height * 4);
 
         FreeImage_Unload(image);
 
         cl::Buffer buff = mem::buffer(ctx, cmdQueue, width * height * 4);
-        mem::write(ctx, cmdQueue, img, buff);
+        mem::write(ctx, cmdQueue, img, buff, numBytes);
 
         return buff;
     }

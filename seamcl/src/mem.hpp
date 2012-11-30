@@ -37,7 +37,7 @@ namespace mem {
         }
     }
 
-    // This only works for stack allocated arrays.
+    // This only works for stack allocated arrays when their size can be fully determined at compile time.
     template<typename T, std::size_t sz>
     void read(cl::Context &ctx, cl::CommandQueue &cmdQueue, T(&arr)[sz], cl::Buffer &buff) {
         cl_int errNum = cmdQueue.enqueueReadBuffer(buff,
@@ -64,7 +64,23 @@ namespace mem {
                                                     NULL,
                                                     NULL);
         if (errNum != CL_SUCCESS) {
-            std::cerr << "Error writing buffer from device to host." << std::endl;
+            std::cerr << "Error writing buffer from host to device." << std::endl;
+            exit(-1);
+        }
+    }
+
+    template<typename T>
+    void write(cl::Context &ctx, cl::CommandQueue &cmdQueue, T *arr, cl::Buffer &buff, size_t size) {
+        cl_int errNum = cmdQueue.enqueueWriteBuffer(buff,
+                                                    CL_TRUE,
+                                                    0,
+                                                    size * sizeof(T),
+                                                    (void *) arr,
+                                                    NULL,
+                                                    NULL);
+
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error writing buffer from host to device." << std::endl;
             exit(-1);
         }
     }

@@ -26,7 +26,7 @@ namespace kernel {
     cl::Kernel computeSeamKernel;
 
     void init(cl::Context &ctx) {
-        blurKernel = setup::kernel(ctx, std::string("GaussianKernel.cl"),
+        blurKernel = setup::kernel(ctx, std::string("GaussianKernelBuffer.cl"),
                                    std::string("gaussian_filter"));
 
         gradientKernel = setup::kernel(ctx, std::string("GradientKernel.cl"), std::string("image_gradient"));
@@ -60,9 +60,8 @@ namespace kernel {
     void blur(cl::Context &ctx,
               cl::CommandQueue &cmdQueue,
               cl::Event &blurEvent,
-              cl::Image2D &inputImage,
-              cl::Image2D &outputImage,
-              cl::Sampler &sampler,
+              cl::Buffer &inputImage,
+              cl::Buffer &outputImage,
               int height,
               int width,
               int colsRemoved) {
@@ -72,10 +71,9 @@ namespace kernel {
 
         errNum = blurKernel.setArg(0, inputImage);
         errNum |= blurKernel.setArg(1, outputImage);
-        errNum |= blurKernel.setArg(2, sampler);
-        errNum |= blurKernel.setArg(3, width);
-        errNum |= blurKernel.setArg(4, height);
-        errNum |= blurKernel.setArg(5, colsRemoved);
+        errNum |= blurKernel.setArg(2, width);
+        errNum |= blurKernel.setArg(3, height);
+        errNum |= blurKernel.setArg(4, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting blurKernel arguments." << std::endl;
@@ -117,7 +115,7 @@ namespace kernel {
                   cl::CommandQueue &cmdQueue,
                   cl::Event &event,
                   std::vector<cl::Event> &deps,
-                  cl::Image2D &inputImage,
+                  cl::Buffer &inputImage,
                   cl::Buffer &energyMatrix,
                   cl::Sampler &sampler,
                   int height,
