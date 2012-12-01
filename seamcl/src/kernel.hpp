@@ -24,7 +24,7 @@ namespace kernel {
     cl::Kernel findMinSeamVertKernel;
     cl::Kernel carveVertKernel;
     cl::Kernel computeSeamKernel;
-    cl::Kernel DP_trapezoid;
+    cl::Kernel DP_trapezoidKernel;
 
     void init(cl::Context &ctx) {
         blurKernel = setup::kernel(ctx, std::string("GaussianKernel.cl"),
@@ -40,7 +40,7 @@ namespace kernel {
 
         computeSeamKernel = setup::kernel(ctx, std::string("computeSeams.cl"),
                                           std::string("computeSeams"));
-	DP_trapezoidKernel = setup::kernel(ctx, string("DP_trapezoid.cl", std::string("DP_trapezoid"));
+	DP_trapezoidKernel = setup::kernel(ctx, std::string("DP_trapezoid.cl", std::string("DP_trapezoid"));
 
         findMinSeamVertKernel= setup::kernel(ctx, std::string("findMinVert.cl"),
                                              std::string("find_min_vert"));
@@ -50,7 +50,7 @@ namespace kernel {
     }
 
     /**
-     * Applies a gaussian blur filter to an image using openCL.
+     * Applies a gaussian blur filter to an image using openCL
      * @param ctx An openCL context object.
      * @param cmdQueue An openCL command queue.
      * @param sampler An openCL image sampler object.

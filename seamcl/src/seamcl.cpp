@@ -133,12 +133,13 @@ int main(int argc, char** argv) {
                                 width, height, pitch, colsRemoved);
 
         // Perform dynamic programming top-bottom
-        kernel::computeSeams(context, cmdQueue,
+         kernel::computeSeams(context, cmdQueue,
                              computeSeamsEvent, computeSeamsDeps,
                              energyMatrix,
                              width, height, pitch, colsRemoved);
-        // TODO: transpose and perform dynamic programming left-right
-
+	
+    // Kernel D: Do dynammic programming with Trapezoid (height = 4):
+    //kernel::DP_trapezoidKernel(context, cmdQueue, computeSeamsEvent, computeSeamsDeps, energyMatrix, width, height, pitch, colsRemoved, 4);
         // Find min vertical seam
         kernel::findMinSeamVert(context, cmdQueue,
                                 findMinSeamVertEvent, findMinSeamVertDeps,
