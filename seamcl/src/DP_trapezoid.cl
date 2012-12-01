@@ -19,9 +19,8 @@ __kernel void DP_trapezoid(
     const int startX = localIdx * blockSize; // left top x-coor of trapezoid.
     const int endX = (localIdx == localSize - 1) ? imgEndIdx : startX + blockSize; // right top x-coor of trapezoid.
     // width of current level of the trapezoid.
-    for (int y_block = 1; y_block < height-trapz_height;
-	 y_block+=trapz_height) {
-        
+    for (int y_block = 1; y_block < height; y_block+=trapz_height) {
+
       // a new trapezoid:
       int trap_x_start = max(startX - trapz_height + 1, 0);
       // left border of this row of the trapezoid.
