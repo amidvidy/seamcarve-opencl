@@ -111,11 +111,12 @@ int main(int argc, char** argv) {
         uint64 startTime = verify::timeMillis();
 
         // NOTE: Only one object detection kernel A-C can be left uncommented:
-
-        // Kernel A: Blur image and then compute gradient.
-        kernel::blur(context, cmdQueue, blurEvent,
-                     *curInputImage, *curOutputImage,
-                     height, width, colsRemoved);
+        // Kernel A: Blur image and then compute gradient,
+	// NOTE: gradient changed to Sobel operator!
+	// Blur no longer needed.
+        //kernel::blur(context, cmdQueue, blurEvent,
+        //             *curInputImage, *curOutputImage,
+        //             height, width, colsRemoved);
 
         kernel::gradient(context, cmdQueue,
                          gradientEvent, gradientDeps,
