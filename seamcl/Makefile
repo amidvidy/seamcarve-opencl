@@ -1,15 +1,11 @@
-OPENCL_HOME ?= /opt/AMDAPP
+include Makefile.inc
 
-TARGET ?= seamcl
+TARGETS ?= seamcl
 BUILDDIR ?= build
 SRCDIR ?= src
 KERNDIR ?= src
 INCDIR ?= include
 dependfile ?= Makefile.dep
-
-CPP := g++
-LINK := g++
-CLCC := clcc
 
 CLSRC := $(wildcard $(KERNDIR)/*.cl)
 CLOUT := $(CLSRC:$(KERNDIR)/%.cl=$(BUILDDIR)/%.out)
@@ -19,22 +15,22 @@ CSRC := $(wildcard $(SRCDIR)/*.cpp)
 CHDR := $(wildcard $(INCDIR)/*.h $(INCDIR)/*.hpp)
 OBJECTS := $(CSRC:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
 LIBS += -lOpenCL -lfreeimage
-LIBDIRS += -L $(OPENCL_HOME)/lib/x86_64
-INCDIRS += -I $(INCDIR) -I $(OPENCL_HOME)/include
+LIBDIRS += $(CUDA_LIBS) $(OPENCL_LIBS)
+INCDIRS += -I $(INCDIR) $(CUDA_INC) $(OPENCL_INC)
 CFLAG_DBG ?= -g3 -O0
 CFLAG += $(CFLAG_DBG) -Wall --std=c++0x
 
 
-default: $(TARGET)
+default: $(TARGETS)
 
 settings:
 	@echo $(CPP) $(CFLAG) $(INCDIR) $(LIBDIRS) $(LIBS)
 	@echo $(CSRC) $(CHDR)
-	@echo $(OBJECTS) $(TARGET)
+	@echo $(OBJECTS) $(TARGETS)
 
-all: $(TARGET) $(CLOUT) utils
+all: $(TARGETS) $(CLOUT) utils
 
-$(TARGET): $(OBJECTS)
+$(TARGETS): $(OBJECTS)
 	$(LINK) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $@
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
@@ -52,7 +48,7 @@ $(BUILDDIR):
 clout: $(CLOUT)
 
 clean:
-	rm -rf $(BUILDDIR) $(dependfile) $(TARGET)
+	rm -rf $(BUILDDIR) $(dependfile) $(TARGETS)
 	cd utils && $(MAKE) $(MAKEFLAGS) clean
 
 utils:
