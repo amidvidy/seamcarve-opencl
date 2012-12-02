@@ -25,7 +25,15 @@ typedef unsigned long long uint64;
 // Checks to ensure that kernels produce correct output
 namespace verify {
 
-
+    template<typename T>
+    bool arraysEqual(T *&a, T *&b, size_t numElems) {
+        for (size_t i = 0; i < numElems; ++i) {
+            if (a[i] != b[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     uint64 timeMillis() {
         struct timeval tv;
