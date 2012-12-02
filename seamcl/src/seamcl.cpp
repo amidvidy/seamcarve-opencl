@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
     // Load image into a buffer
     int width, height;
-    cl::Image2D inputImage = image::load(context, inputFile, height, width);
+    //cl::Image2D inputImage = image::load(context, inputFile, height, width);
     char *origCharBuffer = 0;
     cl::Buffer inputImageBuffer = image::loadBuffer(context, cmdQueue, inputFile, height, width, origCharBuffer);
 
