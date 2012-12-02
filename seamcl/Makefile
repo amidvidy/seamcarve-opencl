@@ -20,7 +20,8 @@ CHDR := $(wildcard $(INCDIR)/*.h $(INCDIR)/*.hpp)
 OBJECTS := $(CSRC:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
 CLIB += -lOpenCL -lfreeimage
 CINC += -I $(INCDIR) -I $(OPENCL_HOME)
-CFLAG += -O0 -Wall --std=c++0x
+CFLAG_DBG ?= -g -O0
+CFLAG += $(CFLAG_DBG) -Wall --std=c++0x
 
 
 default: $(TARGET)
@@ -30,7 +31,7 @@ settings:
 	@echo $(CSRC) $(CHDR)
 	@echo $(OBJECTS) $(TARGET)
 
-all: $(TARGET) $(CLOUT)
+all: $(TARGET) $(CLOUT) utils
 
 $(TARGET): $(OBJECTS)
 	$(LINK) $(OBJECTS) $(CLIB) -o $@
@@ -45,14 +46,16 @@ $(BUILDDIR):
 	mkdir -p $(BUILDDIR)
 
 
-.PHONY: all clean dep fresh clout
+.PHONY: all clean dep clout utils
 
 clout: $(CLOUT)
 
 clean:
 	rm -rf $(BUILDDIR) $(dependfile) $(TARGET)
+	cd utils && $(MAKE) $(MAKEFLAGS) clean
 
-fresh: clean dep all
+utils:
+	cd utils && $(MAKE) $(MAKEFLAGS)
 
 $(dependfile): $(CSRC) $(CHDR) | $(BUILDDIR)
 	$(CPP) -MM $(CFLAG) $(CSRC) $(CINC) > $@

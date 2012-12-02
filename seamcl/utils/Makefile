@@ -5,7 +5,7 @@ THINGS := OpenCLInfo probe ImageFilter2D ImageFilter2D.out
 all: $(THINGS)
 
 %: %.cpp
-	g++ $< -I $(OPENCL_HOME) -lOpenCL -lfreeimage -o $@
+	g++ $< -Wall -O0 -g -I $(OPENCL_HOME) -lOpenCL -lfreeimage -o $@
 
 %.out: %.cl
 	clcc --add_headers $< -o $@
