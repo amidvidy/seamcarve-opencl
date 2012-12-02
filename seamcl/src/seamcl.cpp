@@ -28,24 +28,32 @@ int main(int argc, char** argv) {
 
     // Parse arguments
     std::string inputFile, outputFile;
-    int desiredWidth, desiredHeight;
-    setup::args(argc, argv, inputFile, outputFile, desiredWidth, desiredHeight);
+    int colsToRemove;
+    setup::args(argc, argv, inputFile, outputFile, colsToRemove);
 
     // Create OpenCL context
     cl::Context context = setup::context();
     // Create commandQueue
     cl::CommandQueue cmdQueue = setup::commandQueue(context);
 
+    char *imgBytes = 0;
+
     // Load image into a buffer
     int width, height;
     //cl::Image2D inputImage = image::load(context, inputFile, height, width);
-    cl::Buffer inputImage = image::loadBuffer(context, cmdQueue, inputFile, height, width);
+    //cl::Buffer inputImage = image::loadBuffer(context, cmdQueue, inputFile, height, width);
+    cl::Buffer inputImage = image::loadBuffer(context, cmdQueue, inputFile, height, width, imgBytes);
+
+    if (colsToRemove > width) {
+        std::cerr << "Trying to remove more columns then there are in the picture!" << std::endl;
+        exit(-1);
+    }
 
     // just in case we end up using padding
     int pitch = width;
 
     // Make sampler
-    cl::Sampler sampler = image::sampler(context);
+    //cl::Sampler sampler = image::sampler(context);
 
     // Intermediate buffer to hold blurred image.
     cl::Buffer blurredImage = mem::buffer(context, cmdQueue, height * width * 4); // 32 bit pixels
@@ -65,8 +73,6 @@ int main(int argc, char** argv) {
     // Init kernels
     kernel::init(context);
 
-    int colsToRemove = width - desiredWidth;
-
     // We are going to need to swap pointers each iteration
     cl::Buffer *curInputImage = &inputImage;
     cl::Buffer *curOutputImage = &blurredImage;
@@ -75,7 +81,6 @@ int main(int argc, char** argv) {
 
     uint64 totalTimeMillis = 0;
 
-    colsToRemove = 350;
     int colsRemoved = 0;
 
     // Events
@@ -106,7 +111,13 @@ int main(int argc, char** argv) {
 
     cl_ulong kernelStartTime, kernelEndTime;
 
-    // Outer iterator, still need to figure out height
+    // Testing
+    if(!verify::testMemReadWrite(context, cmdQueue, height * width)) {
+        exit(-1);
+    }
+
+
+    // Outer iterator, still need to figure out height 
     //while (width > desiredWidth || height > desiredHeight) {
     while (colsRemoved < colsToRemove) {
         std::cout << "Starting iteration:\t#" << colsRemoved << std::endl;
@@ -122,7 +133,7 @@ int main(int argc, char** argv) {
         kernel::gradient(context, cmdQueue,
                          gradientEvent, gradientDeps,
                          *curOutputImage,
-                         energyMatrix, sampler,
+                         energyMatrix,
                          height, width, colsRemoved);
 
         // Kernel B: Convolve with Laplacian of Gaussian:
@@ -162,7 +173,7 @@ int main(int argc, char** argv) {
         kernel::carveVert(context, cmdQueue,
                           carveVertEvent, carveVertDeps,
                           *curInputImage, *curOutputImage,
-                          vertSeamPath, sampler,
+                          vertSeamPath,
                           width, height, colsRemoved + 1);
 
         cmdQueue.flush(); // Is this call needed?
@@ -203,18 +214,34 @@ int main(int argc, char** argv) {
         carveVertTimeMicros += (kernelEndTime - kernelStartTime);
     }
 
+    char *imgOutBytes = 0;
+
+
+
+    cmdQueue.finish();
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
-    image::save(cmdQueue, *curOutputImage, outputFile, height, width);
+    image::saveBuffer(context, cmdQueue, *curOutputImage, outputFile, height, width, imgOutBytes);
+
+    int diffs = 0;
+    for (int i = 0; i < width; ++i) {
+        for (int j = 0; j < height; ++j) {
+            if (imgOutBytes[i*4 + j] != imgBytes[i + j*4]) {
+                diffs++;
+            }
+        }
+    }
+    if (diffs > 0) std::cerr << "Found " << diffs << " mismatches!" << std::endl;
+
     std::cout << std::endl;
     std::cout << "Carve completed!" << std::endl;
     std::cout << std::endl;
     std::cout << "Avg total time per iteration:\t" << totalTimeMillis / colsToRemove << " millis" << std::endl;
-    std::cout << "Avg time for blur:\t" << blurTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for gradient:\t" << gradientTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for maskUnreachable:\t" << maskUnreachableTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for computeSeams\t" << computeSeamsTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for findMinSeamVert\t" << findMinSeamVertTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for backtrack\t" << backtrackTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for carveVert\t" << carveVertTimeMicros / colsToRemove << " nanos" << std::endl;
+    std::cout << "Avg time for blur:\t" << blurTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for gradient:\t" << gradientTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for maskUnreachable:\t" << maskUnreachableTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for computeSeams\t" << computeSeamsTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for findMinSeamVert\t" << findMinSeamVertTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for backtrack\t" << backtrackTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for carveVert\t" << carveVertTimeMicros / colsToRemove << " micros" << std::endl;
 }

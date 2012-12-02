@@ -16,6 +16,8 @@ namespace mem {
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error allocating a buffer on the device." << std::endl;
+            std::cerr << "numBytes = " << numBytes << std::endl;
+            std::cerr << "errNum = " << errNum << std::endl;
             exit(-1);
         }
 
@@ -23,12 +25,13 @@ namespace mem {
     }
 
     template<typename T>
-    void read(cl::Context &ctx, cl::CommandQueue &cmdQueue, T *arr, cl::Buffer &buff, size_t size) {
+    void read(cl::Context &ctx, cl::CommandQueue &cmdQueue, T *arr, cl::Buffer &buff, size_t numBytes) {
+        std::cout << "numBytes trying to read = " << numBytes << std::endl;
         cl_int errNum = cmdQueue.enqueueReadBuffer(buff,
                                                    CL_TRUE,
                                                    0,
-                                                   size * sizeof(T),
-                                                   (void *) arr,
+                                                   numBytes,
+                                                   arr,
                                                    NULL,
                                                    NULL);
         if (errNum != CL_SUCCESS) {
@@ -44,7 +47,7 @@ namespace mem {
                                                    CL_TRUE,
                                                    0,
                                                    sz * sizeof(T),
-                                                   (void *) arr,
+                                                   arr,
                                                    NULL,
                                                    NULL);
         if (errNum != CL_SUCCESS) {
@@ -70,12 +73,13 @@ namespace mem {
     }
 
     template<typename T>
-    void write(cl::Context &ctx, cl::CommandQueue &cmdQueue, T *arr, cl::Buffer &buff, size_t size) {
+    void write(cl::Context &ctx, cl::CommandQueue &cmdQueue, T *arr, cl::Buffer &buff, size_t numBytes) {
+        std::cout << "numBytes trying to write = " << numBytes << std::endl;
         cl_int errNum = cmdQueue.enqueueWriteBuffer(buff,
                                                     CL_TRUE,
                                                     0,
-                                                    size * sizeof(T),
-                                                    (void *) arr,
+                                                    numBytes,
+                                                    arr,
                                                     NULL,
                                                     NULL);
 

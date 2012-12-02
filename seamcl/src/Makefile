@@ -12,10 +12,10 @@ all: seamcl
 clout: $(CLOUT)
 
 seamcl: $(OBJECTS)
-	g++ $< -Wall -O2 -I $(OPENCL_HOME) -lOpenCL -lfreeimage -o $@
+	g++-4.7 $< -Wall -std=c++11 -O0 -I $(OPENCL_HOME) -lOpenCL -lfreeimage -o $@
 
 seamcl.o : image.hpp kernel.hpp math.hpp mem.hpp setup.hpp
-	g++ -c -O2 seamcl.cpp
+	g++-4.7 -c -std=c++11 -O0 seamcl.cpp
 
 $(BUILDDIR)/%.out: %.cl | $(BUILDDIR)
 	clcc --add_headers -o $@ $<

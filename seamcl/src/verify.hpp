@@ -11,6 +11,7 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <random>
 
 // OpencL
 #include <CL/cl.hpp>
@@ -22,10 +23,36 @@
 typedef long long int64;
 typedef unsigned long long uint64;
 
-// Checks to ensure that kernels produce correct output
+// Testing utilities
 namespace verify {
 
-
+    bool testMemReadWrite(cl::Context &ctx, cl::CommandQueue &cmdQueue, int numInts) {
+        int *randNums = new int[numInts];
+        std::default_random_engine generator;
+        std::uniform_int_distribution<int> distribution(1, 10000);
+        for (int i = 0; i < numInts; ++i) {
+            randNums[i] = distribution(generator);
+        }
+        // Create a buffer on device
+        cl::Buffer deviceBuff = mem::buffer(ctx, cmdQueue, numInts * sizeof(int));
+        // Copy ints over
+        mem::write(ctx, cmdQueue, randNums, deviceBuff, numInts * sizeof(int));
+        // Copy ints back
+        int *hostBuff = new int[numInts];
+        mem::read(ctx, cmdQueue, hostBuff, deviceBuff, numInts * sizeof(int));
+        // Check equality
+        bool passed = true;
+        for (int i = 0; i < numInts; ++i) {
+            if (randNums[i] != hostBuff[i]) {
+                std::cerr << "TEST MEM READ AND WRITE FAILED!!!" << std::endl;
+                passed = false;
+                break;
+            }
+        }
+        delete [] randNums;
+        delete [] hostBuff;
+        return passed;
+    }
 
     uint64 timeMillis() {
         struct timeval tv;

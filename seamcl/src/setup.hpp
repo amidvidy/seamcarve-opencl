@@ -10,10 +10,10 @@ namespace setup {
     void args(int argc, char** argv,
               std::string &inputFile,
               std::string &outputFile,
-              int &desiredWidth,
-              int &desiredHeight) {
-        if (argc < 5) {
-            std::cerr << "USAGE: seamcl <INPUT> <OUTPUT> <DESIRED WIDTH> <DESIRED HEIGHT>" << std::endl;
+              int &colsToRemove) {
+
+        if (argc < 4) {
+            std::cerr << "USAGE: seamcl <INPUT> <OUTPUT> <COLS_TO_REMOVE>" << std::endl;
             exit(-1);
         }
 
@@ -22,12 +22,8 @@ namespace setup {
         outputFile = std::string(argv[2]);
 
         std::istringstream s1(argv[3]);
-        std::istringstream s2(argv[4]);
-        if (! (s1 >> desiredWidth)) {
-            std::cerr << "DESIRED WIDTH must be an integer." << std::endl;
-            exit(-1);
-        } else if (! (s2 >> desiredHeight)) {
-            std::cerr << "DESIRED HEIGHT must be an integer." << std::endl;
+        if (! (s1 >> colsToRemove)) {
+            std::cerr << "COLS_TO_REMOVE must be an integer." << std::endl;
             exit(-1);
         }
 

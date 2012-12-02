@@ -28,16 +28,16 @@ __kernel void gaussian_filter(__global uchar4* srcImg,
         {
             for( int x = startImageCoord.x; x <= endImageCoord.x; x++)
             {
-                filterElem = kernelWeights[weight];
+                float filterElem = kernelWeights[weight] / 16.0f;
                 uchar4 sourcePixel = srcImg[clamp(y, 0, height) * width + clamp(x, 0, width)];
-                r += sourcePixel.x * (filterElem / 16.0f);
-                g += sourcePixel.y * (filterElem / 16.0f);
-                b += sourcePixel.z * (filterElem / 16.0f);
+                r += sourcePixel.x * filterElem;
+                g += sourcePixel.y * filterElem;
+                b += sourcePixel.z * filterElem;
                 weight += 1;
             }
         }
 
         // Write the output value to image
-        outImg[outImgCoord.y * width + outImageCoord.x] = (uchar4)(r, g, b, 0);
+        dstImg[outImageCoord.y * width + outImageCoord.x] = (uchar4)(r, g, b, 0);
     }
 }

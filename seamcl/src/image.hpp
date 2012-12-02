@@ -56,8 +56,8 @@ namespace image {
                           cl::CommandQueue &cmdQueue,
                           std::string fileName,
                           int &height,
-                          int &width) {
-
+                          int &width,
+                          char *&bytes) {
         FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
         FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
 
@@ -66,16 +66,57 @@ namespace image {
         height = FreeImage_GetHeight(image);
 
         size_t numBytes = width * height * 4;
-
+        std::cout << "numBytes in image = " << numBytes << std::endl;
+        // Lets try comparing these buffers manually.
+        bytes = new char[numBytes];
         char img[numBytes];
-        memcpy(img, FreeImage_GetBits(image), width * height * 4);
+        memcpy(img, FreeImage_GetBits(image), numBytes);
+        //memcpy(bytes, FreeImage_GetBits(image), numBytes);
+        memcpy(bytes, img, numBytes);
+
+        //for (int i = 0; i < numBytes; ++i) {
+        //  if (bytes[i] != img[i]) {
+        //      std::cerr << "Difference!" << std::endl;
+        //  }
+        //}
 
         FreeImage_Unload(image);
 
         cl::Buffer buff = mem::buffer(ctx, cmdQueue, width * height * 4);
+        
         mem::write(ctx, cmdQueue, img, buff, numBytes);
+        //mem::write(ctx, cmdQueue, bytes, buff, numBytes);
 
         return buff;
+    }
+
+    void saveBuffer(cl::Context ctx,
+                    cl::CommandQueue &cmdQueue,
+                    cl::Buffer &image,
+                    std::string fileName,
+                    int height,
+                    int width,
+                    char *&outBuffer) {
+        char buffer[width * height * 4];
+        outBuffer = new char[width * height * 4];
+        mem::read(ctx, cmdQueue, buffer, image, width * height * 4);
+
+        FREE_IMAGE_FORMAT format = FreeImage_GetFIFFromFilename(fileName.c_str());
+        FIBITMAP *bitmap = FreeImage_ConvertFromRawBits((BYTE*)buffer,
+                                                        width,
+                                                        height,
+                                                        width * 4,
+                                                        32,
+                                                        0xFF000000,
+                                                        0x00FF0000,
+                                                        0x0000FF00,
+                                                        FALSE);
+
+        if (FreeImage_Save(format, bitmap, fileName.c_str()) != TRUE) {
+            std::cerr << "Error writing output image: " << fileName << std::endl;
+            exit(-1);
+        }
+
     }
 
     /**
@@ -116,13 +157,14 @@ namespace image {
 
         FREE_IMAGE_FORMAT format = FreeImage_GetFIFFromFilename(fileName.c_str());
         FIBITMAP *bitmap = FreeImage_ConvertFromRawBits((BYTE*)buffer,
-                                                       width,
-                                                       height,
-                                                       width * 4,
-                                                       32,
-                                                       0xFF000000,
-                                                       0x00FF0000,
-                                                       0x0000FF00);
+                                                        width,
+                                                        height,
+                                                        width * 4,
+                                                        32,
+                                                        0xFF000000,
+                                                        0x00FF0000,
+                                                        0x0000FF00,
+                                                        FALSE);
 
         if (FreeImage_Save(format, bitmap, fileName.c_str()) != TRUE) {
             std::cerr << "Error writing output image: " << fileName << std::endl;
