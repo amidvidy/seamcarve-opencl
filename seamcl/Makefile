@@ -20,7 +20,7 @@ CHDR := $(wildcard $(INCDIR)/*.h $(INCDIR)/*.hpp)
 OBJECTS := $(CSRC:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
 CLIB += -lOpenCL -lfreeimage
 CINC += -I $(INCDIR) -I $(OPENCL_HOME)
-CFLAG_DBG ?= -g -O0
+CFLAG_DBG ?= -g3 -O0
 CFLAG += $(CFLAG_DBG) -Wall --std=c++0x
 
 
