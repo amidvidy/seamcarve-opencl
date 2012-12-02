@@ -2,7 +2,11 @@
 #define KERNEL_HPP
 
 // OpenCL
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/cl.hpp>
+#else
 #include <CL/cl.hpp>
+#endif
 
 // STL
 #include <iostream>

@@ -5,7 +5,11 @@
 #include "FreeImage.h"
 
 // OpenCL
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/cl.hpp>
+#else
 #include <CL/cl.hpp>
+#endif
 
 // Functions relating to image handling
 namespace image {
@@ -19,6 +23,17 @@ namespace image {
      * @return An openCL image2D object representing the image on the device.
      */
     cl::Image2D load(cl::Context &ctx, std::string fileName, int &height, int &width);
+
+    /**
+     * Saves the contents of an image object to disk.
+     * @param cmdQueue An openCL commandQueue object.
+     * @param image The image object to read data from.
+     * @param fileName The file in which to store the resulting image.
+     * @param height The height of the image.
+     * @param width The width of the image.
+     * @return Whether the operation was successful or not.
+     */
+    void save(cl::CommandQueue &cmdQueue, cl::Image2D &image, std::string fileName, int height, int width);
 
     cl::Buffer loadBuffer(cl::Context &ctx,
                           cl::CommandQueue &cmdQueue,
@@ -34,33 +49,6 @@ namespace image {
                     int width,
                     char *&outBuffer);
 
-    /**
-     * Saves the contents of an image object to disk.
-     * @param cmdQueue An openCL commandQueue object.
-     * @param image The image object to read data from.
-     * @param fileName The file in which to store the resulting image.
-     * @param height The height of the image.
-     * @param width The width of the image.
-     * @return Whether the operation was successful or not.
-     */
-    void save(cl::CommandQueue &cmdQueue, cl::Image2D &image, std::string fileName, int height, int width);
-
-    /**
-     * Creates a writable, empty image object in texture memory.
-     * @param ctx An openCL context object.
-     * @param height The desired height of the image object
-     * @param width The desired width of the image object
-     * @return An openCL Image2D object representing the texture memory.
-     */
-    cl::Image2D make(cl::Context &ctx, int height, int width);
-
-    /**
-     * Creates an openCL sampler object for sampling continuous values from an image with
-     * hardware acceleration.
-     * @param ctx An openCL context object.
-     * @return An openCL sampler object.
-     */
-    cl::Sampler sampler(cl::Context &ctx);
 } // namespace image
 
 #endif

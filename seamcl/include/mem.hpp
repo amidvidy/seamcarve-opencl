@@ -1,8 +1,14 @@
 #ifndef MEM_HPP
 #define MEM_HPP
 
+// OpenCL
+#if defined(__APPLE__) || defined(__MACOSX)
+#include <OpenCL/cl.hpp>
+#else
 #include <CL/cl.hpp>
+#endif
 
+// STL
 #include <iostream>
 
 // Functions relating to allocating device memory, and marshalling data back and forth from the device.
