@@ -1,4 +1,4 @@
-OPENCL_HOME ?= /opt/AMDAPP/include
+OPENCL_HOME ?= /opt/AMDAPP
 
 TARGET ?= seamcl
 BUILDDIR ?= build
@@ -18,8 +18,9 @@ CLOPT += --add_headers
 CSRC := $(wildcard $(SRCDIR)/*.cpp)
 CHDR := $(wildcard $(INCDIR)/*.h $(INCDIR)/*.hpp)
 OBJECTS := $(CSRC:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
-CLIB += -lOpenCL -lfreeimage
-CINC += -I $(INCDIR) -I $(OPENCL_HOME)
+LIBS += -lOpenCL -lfreeimage
+LIBDIRS += -L $(OPENCL_HOME)/lib/x86_64
+INCDIRS += -I $(INCDIR) -I $(OPENCL_HOME)/include
 CFLAG_DBG ?= -g3 -O0
 CFLAG += $(CFLAG_DBG) -Wall --std=c++0x
 
@@ -27,17 +28,17 @@ CFLAG += $(CFLAG_DBG) -Wall --std=c++0x
 default: $(TARGET)
 
 settings:
-	@echo $(CPP) $(CFLAG) $(CINC) $(CLIB)
+	@echo $(CPP) $(CFLAG) $(INCDIR) $(LIBDIRS) $(LIBS)
 	@echo $(CSRC) $(CHDR)
 	@echo $(OBJECTS) $(TARGET)
 
 all: $(TARGET) $(CLOUT) utils
 
 $(TARGET): $(OBJECTS)
-	$(LINK) $(OBJECTS) $(CLIB) -o $@
+	$(LINK) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $@
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
-	$(CPP) -o $@ -c $< $(CFLAG) $(CINC)
+	$(CPP) -o $@ -c $< $(CFLAG) $(INCDIRS)
 
 $(BUILDDIR)/%.out: $(KERNDIR)/%.cl | $(BUILDDIR)
 	-$(CLCC) $(CLOPT) -o $@ $<
@@ -58,7 +59,7 @@ utils:
 	cd utils && $(MAKE) $(MAKEFLAGS)
 
 $(dependfile): $(CSRC) $(CHDR) | $(BUILDDIR)
-	$(CPP) -MM $(CFLAG) $(CSRC) $(CINC) > $@
+	$(CPP) -MM $(CFLAG) $(CSRC) $(INCDIRS) > $@
 
 dep: $(dependfile)
 
