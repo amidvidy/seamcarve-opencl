@@ -1,12 +1,15 @@
 #ifndef IMAGE_HPP
 #define IMAGE_HPP
 
+#include "mem.hpp"
+
 // Functions relating to image handling
 namespace image {
 
+
     /**
      * Loads an image from a file into device texture memory.
-     * @param ctx An openCL context object.
+n     * @param ctx An openCL context object.
      * @param fileName The image file to use.
      * @param height An int ref to read the height into for later use.
      * @param width An int ref to read the width into for later use.
@@ -46,29 +49,29 @@ namespace image {
         return img;
     }
 
-    cl::Buffer loadBuffer(cl::Context &ctx,
-                          cl::CommandQueue &cmdQueue,
-                          std::string fileName,
-                          int &height,
-                          int &width) {
+    // cl::Buffer loadBuffer(cl::Context &ctx,
+    //                       cl::CommandQueue &cmdQueue,
+    //                       std::string fileName,
+    //                       int &height,
+    //                       int &width) {
 
-        FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
-        FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
+    //     FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
+    //     FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
 
-        image = FreeImage_ConvertTo32Bits(image);
-        width = FreeImage_GetWidth(image);
-        height = FreeImage_GetHeight(image);
+    //     image = FreeImage_ConvertTo32Bits(image);
+    //     width = FreeImage_GetWidth(image);
+    //     height = FreeImage_GetHeight(image);
 
-        char img[width * height * 4];
-        memcpy(img, FreeImage_GetBits(image), width * height * 4);
+    //     char img[width * height * 4];
+    //     memcpy(img, FreeImage_GetBits(image), width * height * 4);
 
-        FreeImage_Unload(image);
+    //     FreeImage_Unload(image);
 
-        cl::Buffer buff = mem::buffer(ctx, cmdQueue, width * height * 4);
-        mem::write(ctx, cmdQueue, img, buff);
+    //     cl::Buffer buff = mem::buffer(ctx, cmdQueue, width * height * 4);
+    //     mem::write(ctx, cmdQueue, img, buff);
 
-        return buff;
-    }
+    //     return buff;
+    // }
 
     /**
      * Saves the contents of an image object to disk.

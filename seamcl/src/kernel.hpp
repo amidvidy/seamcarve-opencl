@@ -40,7 +40,7 @@ namespace kernel {
 
         computeSeamKernel = setup::kernel(ctx, std::string("computeSeams.cl"),
                                           std::string("computeSeams"));
-	DP_trapezoidKernel = setup::kernel(ctx, std::string("DP_trapezoid.cl", std::string("DP_trapezoid"));
+        //DP_trapezoidKernel = setup::kernel(ctx, std::string("DP_trapezoid.cl"), std::string("DP_trapezoid"));
 
         findMinSeamVertKernel= setup::kernel(ctx, std::string("findMinVert.cl"),
                                              std::string("find_min_vert"));

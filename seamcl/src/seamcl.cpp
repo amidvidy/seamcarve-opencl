@@ -28,8 +28,8 @@ int main(int argc, char** argv) {
 
     // Parse arguments
     std::string inputFile, outputFile;
-    int desiredWidth, desiredHeight;
-    setup::args(argc, argv, inputFile, outputFile, desiredWidth, desiredHeight);
+    int colsToRemove;
+    setup::args(argc, argv, inputFile, outputFile, colsToRemove);
 
     // Create OpenCL context
     cl::Context context = setup::context();
@@ -62,15 +62,12 @@ int main(int argc, char** argv) {
     // Init kernels
     kernel::init(context);
 
-    int colsToRemove = width - desiredWidth;
-
     // We are going to need to swap pointers each iteration
     cl::Image2D *curInputImage = &inputImage;
     cl::Image2D *curOutputImage = &blurredImage;
 
     uint64 totalTimeMillis = 0;
 
-    colsToRemove = 350;
     int colsRemoved = 0;
 
     // Events
