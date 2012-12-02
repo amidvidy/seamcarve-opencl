@@ -1,6 +1,8 @@
 #ifndef MATH_HPP
 #define MATH_HPP
 
+#include <cstring>
+
 // Math utils
 namespace math {
 
@@ -10,6 +12,7 @@ namespace math {
      * @param globalSize The unrounded globalSize
      * @return The smallest multiple of groupSize greater than globalSize.
      */
+    inline
     size_t roundUp(int groupSize, int globalSize) {
         int r = globalSize % groupSize;
         if (r == 0) {
