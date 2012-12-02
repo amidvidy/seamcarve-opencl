@@ -49,29 +49,31 @@ n     * @param ctx An openCL context object.
         return img;
     }
 
-    // cl::Buffer loadBuffer(cl::Context &ctx,
-    //                       cl::CommandQueue &cmdQueue,
-    //                       std::string fileName,
-    //                       int &height,
-    //                       int &width) {
+    cl::Buffer loadBuffer(cl::Context &ctx,
+                          cl::CommandQueue &cmdQueue,
+                          std::string fileName,
+                          int &height,
+                          int &width,
+                          char *& img) {
 
-    //     FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
-    //     FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
+        FREE_IMAGE_FORMAT format = FreeImage_GetFileType(fileName.c_str(), 0);
+        FIBITMAP *image = FreeImage_Load(format, fileName.c_str());
 
-    //     image = FreeImage_ConvertTo32Bits(image);
-    //     width = FreeImage_GetWidth(image);
-    //     height = FreeImage_GetHeight(image);
+        image = FreeImage_ConvertTo32Bits(image);
+        width = FreeImage_GetWidth(image);
+        height = FreeImage_GetHeight(image);
 
-    //     char img[width * height * 4];
-    //     memcpy(img, FreeImage_GetBits(image), width * height * 4);
+        //char img[width * height * 4];
+        img = new char[width * height * 4];
+        memcpy(img, FreeImage_GetBits(image), width * height * 4);
 
-    //     FreeImage_Unload(image);
+        FreeImage_Unload(image);
 
-    //     cl::Buffer buff = mem::buffer(ctx, cmdQueue, width * height * 4);
-    //     mem::write(ctx, cmdQueue, img, buff);
-
-    //     return buff;
-    // }
+        //cl::Buffer buff = mem::buffer(ctx, cmdQueue, width * height * 4);
+        //mem::write(ctx, cmdQueue, img, buff, width * height);
+        cl::Buffer buff = mem::bufferFromHostArray(ctx, cmdQueue, img, width * height * 4);
+        return buff;
+    }
 
     /**
      * Saves the contents of an image object to disk.
@@ -125,6 +127,39 @@ n     * @param ctx An openCL context object.
         }
 
     }
+
+    void saveBuffer(cl::Context &ctx,
+                    cl::CommandQueue &cmdQueue,
+                    cl::Buffer &image,
+                    std::string fileName,
+                    int height,
+                    int width,
+                    char *&buffer) {
+
+        size_t imgNumBytes = width * height * 4;
+        buffer = new char[imgNumBytes];
+        //char buffer[width * height * 4];
+        mem::read(ctx, cmdQueue, buffer, image, imgNumBytes);
+
+        FREE_IMAGE_FORMAT format = FreeImage_GetFIFFromFilename(fileName.c_str());
+        FIBITMAP *bitmap = FreeImage_ConvertFromRawBits((BYTE*)buffer,
+                                                        width,
+                                                        height,
+                                                        width * 4,
+                                                        32,
+                                                        0xFF000000,
+                                                        0x00FF0000,
+                                                        0x0000FF00,
+                                                        FALSE);
+
+        if (FreeImage_Save(format, bitmap, fileName.c_str()) != TRUE) {
+            std::cerr << "Error writing output image: " << fileName << std::endl;
+            exit(-1);
+        }
+
+    }
+
+
 
     /**
      * Creates a writable, empty image object in texture memory.

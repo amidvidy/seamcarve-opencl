@@ -23,6 +23,26 @@ namespace mem {
     }
 
     template<typename T>
+    cl::Buffer bufferFromHostArray(cl::Context &ctx,
+                                   cl::CommandQueue &cmdQueue,
+                                   T* data,
+                                   size_t numBytes) {
+        cl_int errNum;
+        cl::Buffer buff = cl::Buffer(ctx,
+                                     CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                                     numBytes,
+                                     data,
+                                     &errNum);
+        cmdQueue.flush(); cmdQueue.finish(); // Ensure that this finishes before returning.
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error allocating device buffer from host array." << std::endl;
+            exit(-1);
+        }
+        return buff;
+    }
+
+
+    template<typename T>
     void read(cl::Context &ctx, cl::CommandQueue &cmdQueue, T *arr, cl::Buffer &buff, size_t size) {
         cl_int errNum = cmdQueue.enqueueReadBuffer(buff,
                                                    CL_TRUE,
@@ -68,6 +88,24 @@ namespace mem {
             exit(-1);
         }
     }
+
+    // Same as above.
+    template<typename T>
+    void write(cl::Context &ctx, cl::CommandQueue &cmdQueue, T* arr, cl::Buffer &buff, size_t sz) {
+        cl_int errNum = cmdQueue.enqueueWriteBuffer(buff,
+                                                    CL_TRUE,
+                                                    0,
+                                                    sz * sizeof(T),
+                                                    (void *) arr,
+                                                    NULL,
+                                                    NULL);
+        if (errNum != CL_SUCCESS) {
+            std::cerr << "Error writing buffer from device to host." << std::endl;
+            exit(-1);
+        }
+    }
+
+    
 
 } // namespace mem {
 

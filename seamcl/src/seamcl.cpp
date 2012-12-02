@@ -38,7 +38,9 @@ int main(int argc, char** argv) {
 
     // Load image into a buffer
     int width, height;
-    cl::Image2D inputImage = image::load(context, std::string(argv[1]), height, width);
+    cl::Image2D inputImage = image::load(context, inputFile, height, width);
+    char *origCharBuffer = 0;
+    cl::Buffer inputImageBuffer = image::loadBuffer(context, cmdQueue, inputFile, height, width, origCharBuffer);
 
     // just in case we end up using padding
     int pitch = width;
@@ -199,6 +201,19 @@ int main(int argc, char** argv) {
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
     image::save(cmdQueue, *curOutputImage, outputFile, height, width);
+    char *resultCharBuffer = 0;
+    image::saveBuffer(context, cmdQueue, inputImageBuffer, std::string("buffer-out.tif"), height, width, resultCharBuffer);
+
+
+    // TODO(amidvidy): this debugging code is no longer needed.
+    std::cout << std::endl;
+    std::cout << "Checking buffer representation of image..." << std::endl;
+    if (!verify::arraysEqual(origCharBuffer, resultCharBuffer, height * width * 4)) {
+        std::cout << "Arrays do not match!!!" << std::endl;
+    }
+    delete [] origCharBuffer;
+    delete [] resultCharBuffer;
+
     std::cout << std::endl;
     std::cout << "Carve completed!" << std::endl;
     std::cout << std::endl;
