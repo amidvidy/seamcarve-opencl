@@ -1,13 +1,16 @@
-OPENCL_HOME=/opt/AMDAPP/include
+OPENCL_HOME ?= /opt/AMDAPP/include
 
-THING=OpenCLInfo
+THINGS := OpenCLInfo probe ImageFilter2D ImageFilter2D.out
 
-all: $(THING)
+all: $(THINGS)
 
-$(THING): $(THING).cpp
+%: %.cpp
 	g++ $< -I $(OPENCL_HOME) -lOpenCL -lfreeimage -o $@
 
-clean:
-	rm -rf $(THING)
+%.out: %.cl
+	clcc --add_headers $< -o $@
 
-.PHONY: all clean fresh
+clean:
+	rm -rf $(THINGS)
+
+.PHONY: all clean
