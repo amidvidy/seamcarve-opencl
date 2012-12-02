@@ -23,16 +23,16 @@ __kernel void image_gradient(__global uchar4* srcImg,
      // This is still broken.
      if (PixelCoord.x < width && PixelCoord.y < height) {
          // get luminescence values for pixels:
-         uchar4 leftPixel = srcImg[leftPixelCoord.y * width + min(leftPixelCoord.x, 0)];
+         uchar4 leftPixel = srcImg[leftPixelCoord.y * width + max(leftPixelCoord.x, 0)];
          float leftLum = (float)leftPixel.x * 0.299f + (float)leftPixel.y * 0.587f + (float)leftPixel.z * 0.114f;
 
-         uchar4 rightPixel = srcImg[rightPixelCoord.y * width + max(rightPixelCoord.x, height)];
+         uchar4 rightPixel = srcImg[rightPixelCoord.y * width + min(rightPixelCoord.x, height - 1)];
          float rightLum = (float)rightPixel.x * 0.299f + (float)rightPixel.y * 0.587f + (float)rightPixel.z * 0.114f;
 
-         uchar4 abovePixel =  srcImg[max(abovePixelCoord.y, height) * width + abovePixelCoord.x];
+         uchar4 abovePixel =  srcImg[min(abovePixelCoord.y, height - 1) * width + abovePixelCoord.x];
          float aboveLum = (float)abovePixel.x * 0.299f + (float)abovePixel.y * 0.587f + (float)abovePixel.z * 0.114f;
 
-         uchar4 belowPixel =  srcImg[min(abovePixelCoord.y, 0) * width + belowPixelCoord.x];
+         uchar4 belowPixel =  srcImg[max(belowPixelCoord.y, 0) * width + belowPixelCoord.x];
          float belowLum = (float)belowPixel.x * 0.299f + (float)belowPixel.y * 0.587f + (float)abovePixel.z * 0.114f;
          float gradient = fabs(rightLum - leftLum) + fabs(aboveLum - belowLum);
 

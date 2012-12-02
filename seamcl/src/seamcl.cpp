@@ -46,10 +46,11 @@ int main(int argc, char** argv) {
     int pitch = width;
 
     // Make sampler
-    cl::Sampler sampler = image::sampler(context);
+    //cl::Sampler sampler = image::sampler(context);
 
     // Intermediate buffer to hold blurred image.
-    cl::Image2D blurredImage = image::make(context, height, width);
+    //cl::Image2D blurredImage = image::make(context, height, width);
+    cl::Buffer blurredImageBuffer = mem::buffer(context, cmdQueue, height * width * 4);
 
     // Allocate space on device for energy matrix
     cl::Buffer energyMatrix = mem::buffer(context, cmdQueue, height * width * sizeof(float));
@@ -65,8 +66,11 @@ int main(int argc, char** argv) {
     kernel::init(context);
 
     // We are going to need to swap pointers each iteration
-    cl::Image2D *curInputImage = &inputImage;
-    cl::Image2D *curOutputImage = &blurredImage;
+    //cl::Image2D *curInputImage = &inputImage;
+    //cl::Image2D *curOutputImage = &blurredImage;
+
+    cl::Buffer *curInputImage = &inputImageBuffer;
+    cl::Buffer *curOutputImage = &blurredImageBuffer;
 
     uint64 totalTimeMillis = 0;
 
@@ -110,13 +114,13 @@ int main(int argc, char** argv) {
 
         // Kernel A: Blur image and then compute gradient.
         kernel::blur(context, cmdQueue, blurEvent,
-                     *curInputImage, *curOutputImage, sampler,
+                     *curInputImage, *curOutputImage,
                      height, width, colsRemoved);
 
         kernel::gradient(context, cmdQueue,
                          gradientEvent, gradientDeps,
                          *curOutputImage,
-                         energyMatrix, sampler,
+                         energyMatrix,
                          height, width, colsRemoved);
 
         // Kernel B: Convolve with Laplacian of Gaussian:
@@ -136,9 +140,9 @@ int main(int argc, char** argv) {
                              computeSeamsEvent, computeSeamsDeps,
                              energyMatrix,
                              width, height, pitch, colsRemoved);
-	
-    // Kernel D: Do dynammic programming with Trapezoid (height = 4):
-    //kernel::DP_trapezoidKernel(context, cmdQueue, computeSeamsEvent, computeSeamsDeps, energyMatrix, width, height, pitch, colsRemoved, 4);
+
+         // Kernel D: Do dynammic programming with Trapezoid (height = 4):
+         //kernel::DP_trapezoidKernel(context, cmdQueue, computeSeamsEvent, computeSeamsDeps, energyMatrix, width, height, pitch, colsRemoved, 4);
         // Find min vertical seam
         kernel::findMinSeamVert(context, cmdQueue,
                                 findMinSeamVertEvent, findMinSeamVertDeps,
@@ -157,7 +161,7 @@ int main(int argc, char** argv) {
         kernel::carveVert(context, cmdQueue,
                           carveVertEvent, carveVertDeps,
                           *curInputImage, *curOutputImage,
-                          vertSeamPath, sampler,
+                          vertSeamPath,
                           width, height, colsRemoved + 1);
 
         cmdQueue.flush(); // Is this call needed?
@@ -200,9 +204,9 @@ int main(int argc, char** argv) {
 
     // Save image to disk.
     // TODO(amidvidy): this should be saving inputImage
-    image::save(cmdQueue, *curOutputImage, outputFile, height, width);
+    //image::save(cmdQueue, *curOutputImage, outputFile, height, width);
     char *resultCharBuffer = 0;
-    image::saveBuffer(context, cmdQueue, inputImageBuffer, std::string("buffer-out.tif"), height, width, resultCharBuffer);
+    image::saveBuffer(context, cmdQueue, *curOutputImage, outputFile, height, width, resultCharBuffer);
 
 
     // TODO(amidvidy): this debugging code is no longer needed.

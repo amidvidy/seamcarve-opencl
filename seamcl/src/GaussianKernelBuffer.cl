@@ -29,7 +29,7 @@ __kernel void gaussian_filter(__global uchar4* srcImg,
             for( int x = startImageCoord.x; x <= endImageCoord.x; x++)
             {
                 float filterElem = kernelWeights[weight] / 16.0f;
-                uchar4 sourcePixel = srcImg[clamp(y, 0, height) * width + clamp(x, 0, width)];
+                uchar4 sourcePixel = srcImg[clamp(y, 0, height-1) * width + clamp(x, 0, width-1)];
                 r += sourcePixel.x * filterElem;
                 g += sourcePixel.y * filterElem;
                 b += sourcePixel.z * filterElem;

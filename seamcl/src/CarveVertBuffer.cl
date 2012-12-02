@@ -12,11 +12,11 @@ __kernel void carve_vert(__global uchar4* srcImg,
     if (myPixel.x < width && myPixel.y < height) {
         int carveIdx = vertSeamPath[myPixel.y];
         if (myPixel.x < carveIdx) {
-            dstImg[myPixel.x * width + myPixel.y] = srcImg[myPixel.x * width + myPixel.y];
+            dstImg[myPixel.y * width + myPixel.x] = srcImg[myPixel.y * width + myPixel.x];
         } else if (myPixel.x >= carveIdx && myPixel.x < (width - numRowsCarved)) {
-            dstImg[(myPixel.x - 1) * width + myPixel.y] = srcImg[myPixel.x * width + myPixel.y];
+            dstImg[myPixel.y * width + (myPixel.x-1)] = srcImg[myPixel.y * width + myPixel.x];
         } else {
-            dstImg[myPixel.x * width + myPixel.y] = (uchar4) (0, 0, 0, 0);
+            dstImg[myPixel.y * width + myPixel.x] = (uchar4) (0, 0, 0, 0);
         }
     }
 }

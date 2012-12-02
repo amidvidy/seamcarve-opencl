@@ -27,10 +27,10 @@ namespace kernel {
     cl::Kernel DP_trapezoidKernel;
 
     void init(cl::Context &ctx) {
-        blurKernel = setup::kernel(ctx, std::string("GaussianKernel.cl"),
+        blurKernel = setup::kernel(ctx, std::string("GaussianKernelBuffer.cl"),
                                    std::string("gaussian_filter"));
 
-        gradientKernel = setup::kernel(ctx, std::string("GradientKernel.cl"), std::string("image_gradient"));
+        gradientKernel = setup::kernel(ctx, std::string("GradientKernelBuffer.cl"), std::string("image_gradient"));
 
         maskUnreachableKernel = setup::kernel(ctx, std::string("maskUnreachable.cl"),
                                               std::string("mask_unreachable"));
@@ -45,7 +45,7 @@ namespace kernel {
         findMinSeamVertKernel= setup::kernel(ctx, std::string("findMinVert.cl"),
                                              std::string("find_min_vert"));
 
-        carveVertKernel = setup::kernel(ctx, std::string("CarveVert.cl"),
+        carveVertKernel = setup::kernel(ctx, std::string("CarveVertBuffer.cl"),
                                         std::string("carve_vert"));
     }
 
@@ -61,9 +61,8 @@ namespace kernel {
     void blur(cl::Context &ctx,
               cl::CommandQueue &cmdQueue,
               cl::Event &blurEvent,
-              cl::Image2D &inputImage,
-              cl::Image2D &outputImage,
-              cl::Sampler &sampler,
+              cl::Buffer &inputImage,
+              cl::Buffer &outputImage,
               int height,
               int width,
               int colsRemoved) {
@@ -73,10 +72,9 @@ namespace kernel {
 
         errNum = blurKernel.setArg(0, inputImage);
         errNum |= blurKernel.setArg(1, outputImage);
-        errNum |= blurKernel.setArg(2, sampler);
-        errNum |= blurKernel.setArg(3, width);
-        errNum |= blurKernel.setArg(4, height);
-        errNum |= blurKernel.setArg(5, colsRemoved);
+        errNum |= blurKernel.setArg(2, width);
+        errNum |= blurKernel.setArg(3, height);
+        errNum |= blurKernel.setArg(4, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting blurKernel arguments." << std::endl;
@@ -118,9 +116,8 @@ namespace kernel {
                   cl::CommandQueue &cmdQueue,
                   cl::Event &event,
                   std::vector<cl::Event> &deps,
-                  cl::Image2D &inputImage,
+                  cl::Buffer &inputImage,
                   cl::Buffer &energyMatrix,
-                  cl::Sampler &sampler,
                   int height,
                   int width,
                   int colsRemoved) {
@@ -129,10 +126,9 @@ namespace kernel {
         // Set gradientKernel arguments
         errNum = gradientKernel.setArg(0, inputImage);
         errNum |= gradientKernel.setArg(1, energyMatrix);
-        errNum |= gradientKernel.setArg(2, sampler);
-        errNum |= gradientKernel.setArg(3, width);
-        errNum |= gradientKernel.setArg(4, height);
-        errNum |= gradientKernel.setArg(5, colsRemoved);
+        errNum |= gradientKernel.setArg(2, width);
+        errNum |= gradientKernel.setArg(3, height);
+        errNum |= gradientKernel.setArg(4, colsRemoved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting gradient gradientKernel arguments." << std::endl;
@@ -270,11 +266,11 @@ namespace kernel {
 
         //TODO(amidvidy): this should be configurable with a flag
 
-        // /** DEBUGGING */
-        // float *originalEnergyMatrix = new float[width * height];
-        // // read in original data
+        /** DEBUGGING */
+        float *originalEnergyMatrix = new float[width * height];
+        // read in original data
 
-        // mem::read(ctx, cmdQueue, originalEnergyMatrix, energyMatrix, width * height);
+        mem::read(ctx, cmdQueue, originalEnergyMatrix, energyMatrix, width * height);
 
         /** END DEBUGGING **/
 
@@ -287,23 +283,23 @@ namespace kernel {
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error enqueuing computeSeams kernel for execution." << std::endl;
-            // delete [] originalEnergyMatrix;
+            delete [] originalEnergyMatrix;
             exit(-1);
         }
 
         // /** DEBUGGING **/
-        // float *deviceResult = new float[width * height];
-        // mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
+        float *deviceResult = new float[width * height];
+        mem::read(ctx, cmdQueue, deviceResult, energyMatrix, width * height);
 
-        // if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch, colsRemoved)) {
-        //     std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
-        //     delete [] originalEnergyMatrix;
-        //     delete [] deviceResult;
-        //     exit(-1);
-        // }
+        if(!verify::computeSeams(deviceResult, originalEnergyMatrix, width, height, pitch, colsRemoved)) {
+            std::cerr << "Incorrect results from kernel::computeSeams" << std::endl;
+            delete [] originalEnergyMatrix;
+            delete [] deviceResult;
+            exit(-1);
+        }
 
-        // delete [] originalEnergyMatrix;
-        // delete [] deviceResult;
+        delete [] originalEnergyMatrix;
+        delete [] deviceResult;
         // /** END DEBUGGING **/
     }
 
@@ -556,10 +552,9 @@ namespace kernel {
                    cl::CommandQueue &cmdQueue,
                    cl::Event &event,
                    std::vector<cl::Event> &deps,
-                   cl::Image2D &inputImage,
-                   cl::Image2D &outputImage,
+                   cl::Buffer &inputImage,
+                   cl::Buffer &outputImage,
                    cl::Buffer &vertSeamPath,
-                   cl::Sampler &sampler,
                    int width,
                    int height,
                    int numRowsCarved) {
@@ -569,10 +564,9 @@ namespace kernel {
         errNum = carveVertKernel.setArg(0, inputImage);
         errNum |= carveVertKernel.setArg(1, outputImage);
         errNum |= carveVertKernel.setArg(2, vertSeamPath);
-        errNum |= carveVertKernel.setArg(3, sampler);
-        errNum |= carveVertKernel.setArg(4, width);
-        errNum |= carveVertKernel.setArg(5, height);
-        errNum |= carveVertKernel.setArg(6, numRowsCarved);
+        errNum |= carveVertKernel.setArg(3, width);
+        errNum |= carveVertKernel.setArg(4, height);
+        errNum |= carveVertKernel.setArg(5, numRowsCarved);
 
         if (errNum != CL_SUCCESS) {
             std::cerr << "Error setting carveVert kernel arguments." << std::endl;
