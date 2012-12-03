@@ -12,13 +12,13 @@ all: $(TARGETS)
 
 %: %.cpp
 	@echo -e "\n\n$<\n"
-	-g++ $< -Wall -O0 -g $(CUDA_INC) $(OPENCL_INC) -lOpenCL -lfreeimage -o $@
+	-g++ $< -Wall -O0 -g -I ../include $(CUDA_LIBS) $(OPENCL_LIBS) -o $@
 
 %.out: %.cl
 	@echo -e "\n\n$<\n"
 	-clcc --add_headers $< -o $@
 
 clean:
-	rm -rf $(TARGETS)
+	rm -rf *.dSYM $(TARGETS)
 
 .PHONY: all clean

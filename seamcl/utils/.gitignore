@@ -3,3 +3,4 @@ ImageFilter2D
 probe
 vector_add
 *.out
+*.dSYM
