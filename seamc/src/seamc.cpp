@@ -124,7 +124,7 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
     const int fullWidth = max(inW, newW), fullHeight = max(inH, newH);
     
     void** srcIM = iM;
-    void** newM = (void**) np_zero_matrix_float(fullHeight, fullWidth * pixDepth, NULL);
+    void** newM = (void**) np_zero_matrix<float>(fullHeight, fullWidth * pixDepth, NULL);
     
     int num_carveH = inW - newW, num_carveV = inH - newH;
     int disableTFJ = 0; // Not referenced elsewhere?
@@ -136,10 +136,10 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
     }
     
     SEAMC_WORK_t WORK; // Consistent values across multiple SEAMC calls (rather than globals)
-    int32_t* CARVE = np_zero_array_int32(fullHeight);
-    float** GRAD = np_zero_matrix_float(fullHeight, fullWidth, NULL);
-    float** COST = np_zero_matrix_float(fullHeight, fullWidth, NULL);
-    F4_t** BLUR = (F4_t**) np_zero_matrix_float(fullHeight, fullWidth * pixDepth, NULL);
+    int32_t* CARVE = np_zero_array<int32_t>(fullHeight);
+    float** GRAD = np_zero_matrix<float>(fullHeight, fullWidth, NULL);
+    float** COST = np_zero_matrix<float>(fullHeight, fullWidth, NULL);
+    F4_t** BLUR = (F4_t**) np_zero_matrix<float>(fullHeight, fullWidth * pixDepth, NULL);
     
     WORK.width = inW;
     WORK.height = inH;
@@ -162,7 +162,7 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
             SEAMC_gradient(GRAD, const_cast<const F4_t**>(BLUR), WORK.width, WORK.height);
         } else {
             if (!KONV) {
-                KONV = np_zero_matrix_float(5, 5, NULL);
+                KONV = np_zero_matrix<float>(5, 5, NULL);
                 SEAMC_mKONV_kernel(KONV); // Could even be done once statically
             }
             SEAMC_tfj_conv2d(3, 3, WORK.ydim, WORK.xdim, (float**) srcIM, GRAD, KONV);
@@ -204,11 +204,11 @@ void** SEAMC_carve(void **iM, int inW, int inH, int newW, int newH, bool isCOLOR
     }
     
     // Clean up temporaries
-    CARVE = np_free_array_int32(CARVE);
-    GRAD = np_free_matrix_float(GRAD);
-    COST = np_free_matrix_float(COST);
-    KONV = np_free_matrix_float(KONV);
-    BLUR = (F4_t**) np_free_matrix_float((float**) BLUR);
+    CARVE = np_free_array<int32_t>(CARVE);
+    GRAD = np_free_matrix<float>(GRAD);
+    COST = np_free_matrix<float>(COST);
+    KONV = np_free_matrix<float>(KONV);
+    BLUR = (F4_t**) np_free_matrix<float>((float**) BLUR);
     
     return newM;
 }

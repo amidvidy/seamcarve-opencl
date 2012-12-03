@@ -96,7 +96,7 @@ void** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW, bool isCOLOR)
     if (!im_in) return NULL;
     mw_in = NULL; //Ensure Wand not used after this point
             
-    M = (void**) np_zero_matrix_float(h, w * pixDepth, NULL); // We just ignore pitch for now
+    M = (void**) np_zero_matrix<float>(h, w * pixDepth, NULL); // We just ignore pitch for now
     if (M == NULL) return NULL;
     
     //mw_ok = ModifyImage(&im_in, ex); // Not sure what all this does but
@@ -110,7 +110,7 @@ void** MW_ToMatrix(MagickWand *mw_in, int *pH, int *pW, bool isCOLOR)
     //if (im_in) im_in = DestroyImage(im_in); // IMPROPER if image came from a Wand
     
     if (mw_ok == MagickFalse) {
-        if (M) M = (void**) np_free_matrix_float((float**) M);
+        if (M) M = (void**) np_free_matrix<float>((float**) M);
         h = 0;
         w = 0;
     }
@@ -140,11 +140,11 @@ MagickWand* MW_Carve(const MagickWand *mw_in, int newH, int newW, bool isCOLOR, 
     mw_temp = DestroyMagickWand(mw_temp);
     
     void** M_out = SEAMC_carve(M_in, w, h, newW, newH, isCOLOR, drawLINE);
-    M_in = (void**) np_free_matrix_float((float**) M_in);
+    M_in = (void**) np_free_matrix<float>((float**) M_in);
     
     // Don't actually shrink if just drawing lines
     mw_temp = MW_FromMatrix(M_out, (drawLINE) ? h : newH, (drawLINE) ? w : newW, isCOLOR);
-    M_out = (void**) np_free_matrix_float((float**) M_out);
+    M_out = (void**) np_free_matrix<float>((float**) M_out);
     
     return mw_temp;
 }
