@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static const bool DBG_DUMPIMG = false;
 static const bool DBG_DUMPTXT = false;
@@ -144,17 +145,49 @@ static inline F4_t readImage4Clip(const IMG4_t &IMG4, const I2_t &P)
  ** An important thing to add is GPU style array strides.
  */
 
-int32_t* np_zero_array_int32(size_t length);
-int32_t** np_zero_matrix_int32(size_t height, size_t width, size_t *pPitch);
-int32_t* np_free_array_int32(int32_t* A);
-int32_t** np_free_matrix_int32(int32_t** M);
-
-/* WARNING: These just cheat and cast int32 to float (usually 32-bits too) */
-float* np_zero_array_float(size_t length);
-float** np_zero_matrix_float(size_t height, size_t width, size_t *pPitch);
-float* np_free_array_float(float* A);
-float** np_free_matrix_float(float** M);
-
 void DebugMatrix(void **IMG, int W, int H, const char* name, int remainWidth, bool isCOLOR);
+
+inline void* np_new_array_x(size_t length, size_t sz, bool doZero = false)
+{
+    return (doZero) ? ::calloc(length * sz, 1) : ::malloc(length * sz); // calloc zeros for us
+}
+inline void* np_free_array_x(void* A)
+{
+    if (A) ::free(A);
+    return NULL;
+}
+void** np_new_matrix_x(size_t height, size_t width, size_t *pPitch, size_t sz, bool doZero = false);
+void** np_free_matrix_x(void** M);
+
+template<class T>
+inline T* np_new_array(size_t LEN)
+{
+    return (T*) np_new_array_x(LEN, sizeof(T), false);
+}
+template<class T>
+inline T* np_zero_array(size_t LEN)
+{
+    return (T*) np_new_array_x(LEN, sizeof(T), true);
+}
+template<class T>
+inline T** np_new_matrix(size_t H, size_t W, size_t *pP)
+{
+    return (T**) np_new_matrix_x(H, W, pP, sizeof(T), false);
+}
+template<class T>
+inline T** np_zero_matrix(size_t H, size_t W, size_t *pP)
+{
+    return (T**) np_new_matrix_x(H, W, pP, sizeof(T), true);
+}
+template<class T>
+inline T* np_free_array(T* A)
+{
+    return (T*) np_free_array_x((void*) A);
+}
+template<class T>
+inline T** np_free_matrix(T** M)
+{
+    return (T**) np_free_matrix_x((void**) M);
+}
 
 #endif //_NUMCY_H_
