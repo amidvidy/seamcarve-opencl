@@ -12,7 +12,7 @@ all: seamcl
 clout: $(CLOUT)
 
 seamcl: $(OBJECTS)
-	g++ $< -Wall -O2 -I $(OPENCL_HOME) -lOpenCL -lfreeimage -o $@
+	g++ $< -Wall -O2 -I /usr/local/cuda/include -I $(OPENCL_HOME) -lOpenCL -lfreeimage -o $@
 
 seamcl.o : image.hpp kernel.hpp math.hpp mem.hpp setup.hpp
 	g++ -c -O2 seamcl.cpp
