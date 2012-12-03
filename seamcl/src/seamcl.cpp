@@ -86,12 +86,12 @@ int main(int argc, char** argv) {
     cl::Event carveVertEvent;
 
     // Dependencies, unused for now.
-    std::vector<cl::Event> gradientDeps;
-    std::vector<cl::Event> maskUnreachableDeps;
-    std::vector<cl::Event> computeSeamsDeps;
-    std::vector<cl::Event> findMinSeamVertDeps;
-    std::vector<cl::Event> backtrackDeps;
-    std::vector<cl::Event> carveVertDeps;
+    cl::vector<cl::Event> gradientDeps;
+    cl::vector<cl::Event> maskUnreachableDeps;
+    cl::vector<cl::Event> computeSeamsDeps;
+    cl::vector<cl::Event> findMinSeamVertDeps;
+    cl::vector<cl::Event> backtrackDeps;
+    cl::vector<cl::Event> carveVertDeps;
 
     // Profiling
     //cl_ulong blurTimeMicros = 0;
