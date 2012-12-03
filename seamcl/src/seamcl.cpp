@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
     int colsRemoved = 0;
 
     // Events
-    cl::Event blurEvent;
+    //cl::Event blurEvent;
     cl::Event gradientEvent;
     cl::Event maskUnreachableEvent;
     cl::Event computeSeamsEvent;
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
     std::vector<cl::Event> carveVertDeps;
 
     // Profiling
-    cl_ulong blurTimeMicros = 0;
+    //cl_ulong blurTimeMicros = 0;
     cl_ulong gradientTimeMicros = 0;
     cl_ulong maskUnreachableTimeMicros = 0;
     cl_ulong computeSeamsTimeMicros = 0;
@@ -174,9 +174,9 @@ int main(int argc, char** argv) {
 
         totalTimeMillis += (verify::timeMillis() - startTime);
 
-        blurEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
-        blurEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
-        blurTimeMicros += (kernelEndTime - kernelStartTime);
+        //blurEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
+        //blurEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
+        //blurTimeMicros += (kernelEndTime - kernelStartTime);
 
         gradientEvent.getProfilingInfo(CL_PROFILING_COMMAND_START, &kernelStartTime);
         gradientEvent.getProfilingInfo(CL_PROFILING_COMMAND_END, &kernelEndTime);
@@ -223,11 +223,11 @@ int main(int argc, char** argv) {
     std::cout << "Carve completed!" << std::endl;
     std::cout << std::endl;
     std::cout << "Avg total time per iteration:\t" << totalTimeMillis / colsToRemove << " millis" << std::endl;
-    std::cout << "Avg time for blur:\t" << blurTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for gradient:\t" << gradientTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for maskUnreachable:\t" << maskUnreachableTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for computeSeams\t" << computeSeamsTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for findMinSeamVert\t" << findMinSeamVertTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for backtrack\t" << backtrackTimeMicros / colsToRemove << " nanos" << std::endl;
-    std::cout << "Avg time for carveVert\t" << carveVertTimeMicros / colsToRemove << " nanos" << std::endl;
+    //std::cout << "Avg time for blur:\t" << blurTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for gradient:\t" << gradientTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for maskUnreachable:\t" << maskUnreachableTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for computeSeams\t" << computeSeamsTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for findMinSeamVert\t" << findMinSeamVertTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for backtrack\t" << backtrackTimeMicros / colsToRemove << " micros" << std::endl;
+    std::cout << "Avg time for carveVert\t" << carveVertTimeMicros / colsToRemove << " micros" << std::endl;
 }
