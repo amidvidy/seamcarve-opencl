@@ -211,11 +211,11 @@ int main(int argc, char** argv) {
 
 
     // TODO(amidvidy): this debugging code is no longer needed.
-    std::cout << std::endl;
-    std::cout << "Checking buffer representation of image..." << std::endl;
-    if (!verify::arraysEqual(origCharBuffer, resultCharBuffer, height * width * 4)) {
-        std::cout << "Arrays do not match!!!" << std::endl;
-    }
+    // std::cout << std::endl;
+    // std::cout << "Checking buffer representation of image..." << std::endl;
+    // if (!verify::arraysEqual(origCharBuffer, resultCharBuffer, height * width * 4)) {
+    //     std::cout << "Arrays do not match!!!" << std::endl;
+    // }
     delete [] origCharBuffer;
     delete [] resultCharBuffer;
 
