@@ -12,6 +12,9 @@
 
 #define _PI_ 3.14159265
 
+// Randomly chosen (perhaps rather small) block sizes for cache-block
+static const int block_x = 64, block_y = 12;
+
 // Laplacian of Gaussian convolution of image:
 
 void SEAMC_glaplauxian( //
@@ -37,23 +40,39 @@ void SEAMC_glaplauxian( //
         0.0f, 1.0f, 1.0f, 2.0f, 2.0f, 2.0f, 1.0f, 1.0f, 0.0f };
     
     const IMG4_t SRC(srcImg, width, height);
-    for (int y = 0; y < height; y++) {
-        float *pResultRow = resultMatrix[y];
-        for (int x = 0; x < width; x++) {
-            float gauss_laplacian = 0.0f;
-            int weight = 0;
+    
+    /* BEGIN: CACHE BLOCKING GRID */
+    for (int big_y = 0; big_y < height; big_y += block_y) {
+        int end_y = big_y + block_y;
+        if (end_y > height) end_y = height;
+        
+        for (int big_x = 0; big_x < width; big_x += block_x) {
+            int end_x = big_x + block_x;
+            if (end_x > width) end_x = width;
             
-            // Apply a -4..+4 x -4..+4 stencil thingy
-            for (int yy = y - 4; yy <= y + 4; yy++) {
-                for (int xx = x - 4; xx <= x + 4; xx++) {
-                    const F4_t pix = readImage4Clip(SRC, xx, yy);
-                    const float lum = dot4(luma_coef, pix);
-                    gauss_laplacian += lum * kernelWeights[weight++]; // Use & advance to next weight
+            for (int y = big_y; y < end_y; y++) {
+                float *pResultRow = resultMatrix[y];
+                
+                for (int x = big_x; x < end_x; x++) {
+                    /* END: CACHE BLOCKING GRID */
+
+                    float gauss_laplacian = 0.0f;
+                    int weight = 0;
+                    
+                    // Apply a -4..+4 x -4..+4 stencil thingy
+                    for (int yy = y - 4; yy <= y + 4; yy++) {
+                        for (int xx = x - 4; xx <= x + 4; xx++) {
+                            const F4_t pix = readImage4Clip(SRC, xx, yy);
+                            const float lum = dot4(luma_coef, pix);
+                            gauss_laplacian += lum * kernelWeights[weight++]; // Use & advance to next weight
+                        }
+                    }
+                    
+                    // Write the output value to the result Matrix:
+                    pResultRow[x] = gauss_laplacian + 14096.0f;
+                    
                 }
             }
-            
-            // Write the output value to the result Matrix:
-            pResultRow[x] = gauss_laplacian + 14096.0f;
         }
     }
 }
@@ -70,23 +89,37 @@ void SEAMC_gaussian( //
             1.0f * X, 2.0f * X, 1.0f * X };
     
     const IMG4_t SRC(srcImg, width, height);
-    for (int y = 0; y < height; y++) {
-        F4_t *pResultRow = resultImage[y];
-        for (int x = 0; x < width; x++) {
+    
+    /* BEGIN: CACHE BLOCKING GRID */
+    for (int big_y = 0; big_y < height; big_y += block_y) {
+        int end_y = big_y + block_y;
+        if (end_y > height) end_y = height;
+        
+        for (int big_x = 0; big_x < width; big_x += block_x) {
+            int end_x = big_x + block_x;
+            if (end_x > width) end_x = width;
             
-            int weight = 0;
-            F4_t outColor(0.0f, 0.0f, 0.0f, 0.0f);
-            
-            // Apply a -1..+1 x -1..+1 stencil thingy
-            for (int yy = y - 1; yy <= y + 1; yy++) {
-                for (int xx = x - 1; xx <= x + 1; xx++) {
-                    F4_t pix = readImage4Clip(SRC, xx, yy);
-                    pix *= kernelWeights[weight++];
-                    outColor += pix;
+            for (int y = big_y; y < end_y; y++) {
+                F4_t *pResultRow = resultImage[y];
+                
+                for (int x = big_x; x < end_x; x++) {
+                    /* END: CACHE BLOCKING GRID */
+
+                    int weight = 0;
+                    F4_t outColor(0.0f, 0.0f, 0.0f, 0.0f);
+                    
+                    // Apply a -1..+1 x -1..+1 stencil thingy
+                    for (int yy = y - 1; yy <= y + 1; yy++) {
+                        for (int xx = x - 1; xx <= x + 1; xx++) {
+                            F4_t pix = readImage4Clip(SRC, xx, yy);
+                            pix *= kernelWeights[weight++];
+                            outColor += pix;
+                        }
+                    }
+                    // Write the output value to the result Matrix:
+                    pResultRow[x] = outColor;
                 }
             }
-            // Write the output value to the result Matrix:
-            pResultRow[x] = outColor;
         }
     }
 }
@@ -101,28 +134,44 @@ void SEAMC_gradient( //
                     );
     
     const IMG4_t SRC(srcImg, width, height);
-    for (int y = 0; y < height; y++) {
-        float *pResultRow = resultMatrix[y];
-        for (int x = 0; x < width; x++) {
-            // Determine what portion of image to operate on:
-            I2_t leftPixelCoord(x - 1, y);
-            I2_t rightPixelCoord(x + 1, y);
-            I2_t abovePixelCoord(x, y + 1);
-            I2_t belowPixelCoord(x, y - 1);
-            I2_t PixelCoord(x, y);    // This is location of pixel whose gradient is being computed.
-                    
-            // get luminescence values for pixels:
-            float leftpixel = dot4(luma_coef, readImage4Clip(SRC, leftPixelCoord));
-            float rightpixel = dot4(luma_coef, readImage4Clip(SRC, rightPixelCoord));
-            float abovepixel = dot4(luma_coef, readImage4Clip(SRC, abovePixelCoord));
-            float belowpixel = dot4(luma_coef, readImage4Clip(SRC, belowPixelCoord));
-            //float gradient = fabs(rightpixel - leftpixel) + fabs(abovepixel - belowpixel);
-            // Slightly different formulation of gradient
-            float gradient = sqrt(pow(rightpixel - leftpixel, 2) + pow(abovepixel - belowpixel, 2));
-            gradient *= 1024.0f;
-            gradient += 256;
+    
+    /* BEGIN: CACHE BLOCKING GRID */
+    for (int big_y = 0; big_y < height; big_y += block_y) {
+        int end_y = big_y + block_y;
+        if (end_y > height) end_y = height;
+        
+        for (int big_x = 0; big_x < width; big_x += block_x) {
+            int end_x = big_x + block_x;
+            if (end_x > width) end_x = width;
             
-            pResultRow[x] = gradient;
+            for (int y = big_y; y < end_y; y++) {
+                float *pResultRow = resultMatrix[y];
+                
+                for (int x = big_x; x < end_x; x++) {
+                    /* END: CACHE BLOCKING GRID */
+
+                    // Determine what portion of image to operate on:
+                    I2_t leftPixelCoord(x - 1, y);
+                    I2_t rightPixelCoord(x + 1, y);
+                    I2_t abovePixelCoord(x, y + 1);
+                    I2_t belowPixelCoord(x, y - 1);
+                    I2_t PixelCoord(x, y); // This is location of pixel whose gradient is being computed.
+                            
+                    // get luminescence values for pixels:
+                    float leftpixel = dot4(luma_coef, readImage4Clip(SRC, leftPixelCoord));
+                    float rightpixel = dot4(luma_coef, readImage4Clip(SRC, rightPixelCoord));
+                    float abovepixel = dot4(luma_coef, readImage4Clip(SRC, abovePixelCoord));
+                    float belowpixel = dot4(luma_coef, readImage4Clip(SRC, belowPixelCoord));
+                    //float gradient = fabs(rightpixel - leftpixel) + fabs(abovepixel - belowpixel);
+                    // Slightly different formulation of gradient
+                    float gradient = sqrt(
+                            pow(rightpixel - leftpixel, 2) + pow(abovepixel - belowpixel, 2));
+                    gradient *= 1024.0f;
+                    gradient += 256;
+                    
+                    pResultRow[x] = gradient;
+                }
+            }
         }
     }
 }
