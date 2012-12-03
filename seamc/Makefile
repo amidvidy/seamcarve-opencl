@@ -8,7 +8,8 @@ DIFFIMG ?= diff.$(IMGEXT)
 APPNAME ?= seamc
 BUILDIR ?= build
 
-FLAGS ?= -O3 -Wall -g -fno-inline-functions
+FLAGS ?= -Wall -O3
+#FLAGS ?= -Wall -O0 -g -fno-inline-functions
 LIBS ?= -pthread -fopenmp
 
 CSRCS := $(wildcard src/*.c)
