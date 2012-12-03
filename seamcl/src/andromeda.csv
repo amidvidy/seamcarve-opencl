@@ -1,0 +1,11 @@
+input_image, cols_removed, seamcl_total_time_seconds, seamcl_avg_time_per_iteration_milliseconds, seamc_total_time_seconds, seamc_total_time_milliseconds, seamc_avg_time_per_iteration_milliseconds
+andromeda-10.png, 333, 22.97, 63, N/A, N/A
+andromeda-20.png, 666, 93.611, 136, N/A, N/A
+andromeda-30.png, 1000, 207.181, 203, N/A, N/A
+andromeda-40.png, 1333, 391.665, 290, N/A, N/A
+andromeda-50.png, 1666, 677.461, 403, N/A, N/A
+andromeda-60.png, 2000, 1011.623, 501, N/A, N/A
+andromeda-70.png, 2333, 1482.881, 631, N/A, N/A
+andromeda-80.png, 2666, 
+andromeda-90.png, 3000,
+andromeda-100.png, 3333,
