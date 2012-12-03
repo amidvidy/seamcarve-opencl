@@ -12,7 +12,7 @@ all: $(TARGETS)
 
 %: %.cpp
 	@echo -e "\n\n$<\n"
-	-g++ $< -Wall -O0 -g -I ../include $(CUDA_LIBS) $(OPENCL_LIBS) -o $@
+	-g++ $< -Wall -O0 -g -I ../include $(INC_DIRS) $(LIB_DIRS) $(LIBS) -o $@
 
 %.out: %.cl
 	@echo -e "\n\n$<\n"

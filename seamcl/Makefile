@@ -14,27 +14,25 @@ CLOPT += --add_headers
 CSRC := $(wildcard $(SRCDIR)/*.cpp)
 CHDR := $(wildcard $(INCDIR)/*.h $(INCDIR)/*.hpp)
 OBJECTS := $(CSRC:$(SRCDIR)/%.cpp=$(BUILDDIR)/%.o)
-LIBS += -lOpenCL -lfreeimage
-LIBDIRS += $(CUDA_LIBS) $(OPENCL_LIBS)
-INCDIRS += -I $(INCDIR) $(CUDA_INC) $(OPENCL_INC)
+INC_DIRS += -I $(INCDIR)
 CFLAG_DBG ?= -g3 -O0
-CFLAG += $(CFLAG_DBG) -Wall --std=c++0x
+CFLAG += $(CFLAG_DBG) -Wall
 
 
 default: $(TARGETS)
 
 settings:
-	@echo $(CPP) $(CFLAG) $(INCDIR) $(LIBDIRS) $(LIBS)
+	@echo $(CPP) $(CFLAG) $(INC_DIRS) $(LIB_DIRS) $(LIBS)
 	@echo $(CSRC) $(CHDR)
 	@echo $(OBJECTS) $(TARGETS)
 
 all: $(TARGETS) $(CLOUT) utils
 
 $(TARGETS): $(OBJECTS)
-	$(LINK) $(OBJECTS) $(LIBDIRS) $(LIBS) -o $@
+	$(LINK) $(OBJECTS) $(LIB_DIRS) $(LIBS) -o $@
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp | $(BUILDDIR)
-	$(CPP) -o $@ -c $< $(CFLAG) $(INCDIRS)
+	$(CPP) -o $@ -c $< $(CFLAG) $(INC_DIRS)
 
 $(BUILDDIR)/%.out: $(KERNDIR)/%.cl | $(BUILDDIR)
 	-$(CLCC) $(CLOPT) -o $@ $<
@@ -55,7 +53,7 @@ utils:
 	cd utils && $(MAKE) $(MAKEFLAGS)
 
 $(dependfile): $(CSRC) $(CHDR) | $(BUILDDIR)
-	$(CPP) -MM $(CFLAG) $(CSRC) $(INCDIRS) > $@
+	$(CPP) -MM $(CFLAG) $(CSRC) $(INC_DIRS) > $@
 
 dep: $(dependfile)
 
