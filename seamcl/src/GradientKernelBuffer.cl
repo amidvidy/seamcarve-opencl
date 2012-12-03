@@ -1,4 +1,4 @@
-// Computes gradient of srcImage, writing result to resultMatrix
+// Computes Sobel convolution of srcImage, writing result to resultMatrix:
 
 __kernel void image_gradient(__global uchar4* srcImg,
                              __global float* resultMatrix,
@@ -6,36 +6,38 @@ __kernel void image_gradient(__global uchar4* srcImg,
                              int height,
                              int colsRemoved)
 {
-
      // Determine what portion of image to operate on:
-     int2 leftPixelCoord = (int2) (get_global_id(0) - 1, get_global_id(1));
-     int2 rightPixelCoord  = (int2) (get_global_id(0) + 1, get_global_id(1));
-     int2 abovePixelCoord = (int2) (get_global_id(0), get_global_id(1) + 1);
-     int2 belowPixelCoord = (int2) (get_global_id(0), get_global_id(1) - 1);
-     int2 PixelCoord = (int2) (get_global_id(0), get_global_id(1));     // This is location of pixel whose gradient is being computed.
-     //     printf("START: global_id = (%i, %i)\n", get_global_id(0), get_global_id(1));
-     // TODO: the coefficient weights to convert to grayscale:
-     // (should be ported to CPU?)
-     float4 luma_coef = (float4)(0.299f, 0.587f, 0.114f, 0.0f);
+     int x = get_global_id(0);
+     int y = get_global_id(1);
+     int x_left = max(x-1,0);
+     int x_right = min(x+1,height-1);
+     int y_below = max(y-1,0);
+     int y_above = min(y+1,height-1);
 
-#define getLum(pixel) ((uchar)0.299f * (pixel.x) + (uchar)0.587f * (pixel.y) + (uchar)0.114f * (pixel.z))
-
-     // This is still broken.
-     if (PixelCoord.x < width && PixelCoord.y < height) {
+       if (x < width && y < height) {
          // get luminescence values for pixels:
-         uchar4 leftPixel = srcImg[leftPixelCoord.y * width + max(leftPixelCoord.x, 0)];
-         float leftLum = (float)leftPixel.x * 0.299f + (float)leftPixel.y * 0.587f + (float)leftPixel.z * 0.114f;
+       uchar4 belowLeftPixel = srcImg[y_below * width + x_left];
+         uchar4 belowPixel = srcImg[y_below * width + x];
+         uchar4 belowRightPixel = srcImg[y_below * width + x_right];
+         uchar4 leftPixel = srcImg[y * width + x_left];
+         uchar4 rightPixel = srcImg[y * width + x_right];
+         uchar4 aboveLeftPixel = srcImg[y_above * width + x_left];
+         uchar4 abovePixel =  srcImg[y_above * width + x];
+         uchar4 aboveRightPixel = srcImg[y_above * width + x_right];
 
-         uchar4 rightPixel = srcImg[rightPixelCoord.y * width + min(rightPixelCoord.x, height - 1)];
-         float rightLum = (float)rightPixel.x * 0.299f + (float)rightPixel.y * 0.587f + (float)rightPixel.z * 0.114f;
-
-         uchar4 abovePixel =  srcImg[min(abovePixelCoord.y, height - 1) * width + abovePixelCoord.x];
-         float aboveLum = (float)abovePixel.x * 0.299f + (float)abovePixel.y * 0.587f + (float)abovePixel.z * 0.114f;
-
-         uchar4 belowPixel =  srcImg[max(belowPixelCoord.y, 0) * width + belowPixelCoord.x];
+   // get luminance values:
+         float belowLeftLum = (float)belowLeftPixel.x * 0.299f + (float)belowLeftPixel.y * 0.587f + (float)belowLeftPixel.z * 0.114f;
          float belowLum = (float)belowPixel.x * 0.299f + (float)belowPixel.y * 0.587f + (float)abovePixel.z * 0.114f;
-         float gradient = fabs(rightLum - leftLum) + fabs(aboveLum - belowLum);
+         float belowRightLum = (float)belowRightPixel.x * 0.299f + (float)belowRightPixel.y * 0.587f + (float)belowRightPixel.z * 0.114f;
+         float leftLum = (float)leftPixel.x * 0.299f + (float)leftPixel.y * 0.587f + (float)leftPixel.z * 0.114f;
+         float rightLum = (float)rightPixel.x * 0.299f + (float)rightPixel.y * 0.587f + (float)rightPixel.z * 0.114f;
+         float aboveLeftLum = (float)aboveLeftPixel.x * 0.299f + (float)aboveLeftPixel.y * 0.587f + (float)aboveLeftPixel.z * 0.114f;
+         float aboveLum = (float)abovePixel.x * 0.299f + (float)abovePixel.y * 0.587f + (float)abovePixel.z * 0.114f;
+         float aboveRightLum = (float)aboveRightPixel.x * 0.299f + (float)aboveRightPixel.y * 0.587f + (float)aboveRightPixel.z * 0.114f;
+         //float gradient = fabs(rightLum - leftLum) + fabs(aboveLum - belowLum);
 
-         resultMatrix[PixelCoord.x + width * PixelCoord.y] = gradient;
+float sobel_gradient = fabs(belowRightLum - belowLeftLum + aboveRightLum - aboveLeftLum + 2*(rightLum - leftLum)) + fabs(aboveLeftLum - belowLeftLum + aboveRightLum - belowRightLum + 2*(aboveLum - belowLum));
+
+         resultMatrix[x + width * y] = sobel_gradient;
     }
 }
