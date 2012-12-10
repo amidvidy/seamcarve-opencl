@@ -8,7 +8,7 @@
 #include <time.h>
 
 void SEAMC_mKONV_kernel(float** K);
-void SEAMC_tfj_conv2d(int fromRow, int fromCol, int toRow, int toCol,
-        float **I, float **O, float **K);
+void SEAMC_tfj_conv2d(int fromRow, int fromCol, int toRow, int toCol, float **I,
+		float **O, float **K);
 
 #endif // _ENERGY_GREY_H_

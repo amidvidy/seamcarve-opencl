@@ -40,11 +40,14 @@
 							<tool id="nvcc.linker.base.1306204471" name="NVCC Linker" superClass="nvcc.linker.base">
 								<option id="nvcc.linker.option.paths.1881652996" name="Library search path (-L)" superClass="nvcc.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/usr/lib/ImageMagick"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/seamc/lib}&quot;"/>
 								</option>
 								<option id="nvcc.linker.option.libs.1326445232" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="MagickCore"/>
 									<listOptionValue builtIn="false" value="Magick++"/>
 									<listOptionValue builtIn="false" value="MagickWand"/>
+									<listOptionValue builtIn="false" value="freeimage"/>
+									<listOptionValue builtIn="false" value="npp"/>
 								</option>
 								<inputType id="nvcc.linker.input.1459743069" superClass="nvcc.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -108,11 +111,14 @@
 							<tool id="nvcc.linker.base.1488723204" name="NVCC Linker" superClass="nvcc.linker.base">
 								<option id="nvcc.linker.option.paths.88299991" name="Library search path (-L)" superClass="nvcc.linker.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="/usr/lib/ImageMagick"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/seamc/lib}&quot;"/>
 								</option>
 								<option id="nvcc.linker.option.libs.310776925" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="MagickCore"/>
 									<listOptionValue builtIn="false" value="Magick++"/>
 									<listOptionValue builtIn="false" value="MagickWand"/>
+									<listOptionValue builtIn="false" value="freeimage"/>
+									<listOptionValue builtIn="false" value="npp"/>
 								</option>
 								<inputType id="nvcc.linker.input.1048382823" superClass="nvcc.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -142,15 +148,19 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="seamc.com.nvidia.cuda.ide.exe.255321700" name="Executable" projectType="com.nvidia.cuda.ide.exe"/>
 	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/seamc"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.499023771;com.nvidia.cuda.ide.configuration.debug.499023771.;nvcc.compiler.base.225828007;nvcc.compiler.input.cu.2119532448">
+		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.499023771;com.nvidia.cuda.ide.configuration.debug.499023771.;nvcc.compiler.base.225828007;nvcc.compiler.input.c.385318200">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.499023771;com.nvidia.cuda.ide.configuration.debug.499023771.;nvcc.compiler.base.225828007;nvcc.compiler.input.cpp.891815458">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.499023771;com.nvidia.cuda.ide.configuration.debug.499023771.;nvcc.compiler.base.225828007;nvcc.compiler.input.c.385318200">
+		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.debug.499023771;com.nvidia.cuda.ide.configuration.debug.499023771.;nvcc.compiler.base.225828007;nvcc.compiler.input.cu.2119532448">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.release.1686503119;com.nvidia.cuda.ide.configuration.release.1686503119.;nvcc.compiler.base.1578542722;nvcc.compiler.input.cu.1665856431">
@@ -162,12 +172,11 @@
 		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.toolchain.base.154631336;com.nvidia.cuda.ide.toolchain.base.154631336.1478130181;cdt.managedbuild.tool.gnu.cpp.compiler.base.1115456986;cdt.managedbuild.tool.gnu.cpp.compiler.input.891428085">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.release.1686503119;com.nvidia.cuda.ide.configuration.release.1686503119.;nvcc.compiler.base.1578542722;nvcc.compiler.input.c.1948886872">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
-		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.toolchain.base.154631336;com.nvidia.cuda.ide.toolchain.base.154631336.1478130181;cdt.managedbuild.tool.gnu.c.compiler.base.1746638895;cdt.managedbuild.tool.gnu.c.compiler.input.958279610">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.nvidia.cuda.ide.configuration.release.1686503119;com.nvidia.cuda.ide.configuration.release.1686503119.;nvcc.compiler.base.1578542722;nvcc.compiler.input.c.1948886872">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
+		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="refreshScope"/>
 </cproject>

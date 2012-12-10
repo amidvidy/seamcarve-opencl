@@ -5,12 +5,14 @@ REFIMG ?= $(REFDIR)/out.$(IMGEXT)
 OUTIMG ?= out.$(IMGEXT)
 DIFFIMG ?= diff.$(IMGEXT)
 
+CUDAHOME ?= /usr/local/cuda
+
 APPNAME ?= seamc
 BUILDIR ?= build
 
-FLAGS ?= -Wall -O3
-#FLAGS ?= -Wall -O0 -g -fno-inline-functions
-LIBS ?= -pthread -fopenmp
+#FLAGS ?= -Wall -O3
+FLAGS ?= -Wall -O0 -g -fno-inline-functions -I include -I $(CUDAHOME)/include
+LIBS ?= -pthread -fopenmp -lfreeimage -lnpp -lcudart -L $(CUDAHOME)/lib64
 
 CSRCS := $(wildcard src/*.c)
 CPSRCS:= $(wildcard src/*.cpp)
@@ -21,8 +23,8 @@ OBJ := $(CSRCS:src/%.c=$(BUILDIR)/%.o) $(CPSRCS:src/%.cpp=$(BUILDIR)/%.o)
 WandFLAGS ?= `pkg-config --cflags MagickWand` #`MagickWand-config --cflags --cppflags`
 WandLIBS  ?= `pkg-config --libs MagickWand` #`MagickWand-config --ldflags --libs`
 
-CFLAGS = -std=c99 $(WandFLAGS) $(FLAGS) -I include
-CPFLAGS = $(WandFLAGS) $(FLAGS) -I include
+CFLAGS = -std=c99 $(WandFLAGS) $(FLAGS)
+CPFLAGS = $(WandFLAGS) $(FLAGS)
 LIBS  += $(WandLIBS)
 
 CC ?= gcc
