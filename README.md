@@ -1,7 +1,7 @@
 seamcl
 =========
 
-An implementation of the content aware resizing algorithm in OpenCL.
+An implementation of the Content Aware Resizing algorithm in OpenCL.
 
 Submission for our CS194 "Engineering Parallel Software" Final Project
 
